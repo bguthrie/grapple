@@ -38,13 +38,14 @@ Grapple =
     for series in allSeries
       $("ul.slidemarkers").append $("<li>")
 
-    behindCurtain = (toDo) ->
+    behindCurtain = (renderSlide) ->
       $(".slidemarkers li").fadeTo 500, 0.2
       $('#curtain').fadeTo 500, 1.0, () ->
-        toDo()
+        renderSlide()
         $( $(".slidemarkers li")[slideIndex] ).fadeTo 1000, 0.6
         slideIndex = ( slideIndex + 1 ) % allSeries.length
         $('#curtain').fadeTo 1000, 0.0
+        $("#curtain .loading").remove()
 
     renderNextSlide = () ->
       console.log "Rendering slide", slideIndex
@@ -75,3 +76,5 @@ $ ->
 
   $(window).resize Grapple.resize
   Grapple.resize()
+
+  $("#curtain .loading").fitText(1.0)

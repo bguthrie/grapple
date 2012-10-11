@@ -9,8 +9,8 @@
 body {
   background-color: @background;
   color: white;
-  font-family: "HelveticaNeue-Light", "Helvetica Neue Light", "Helvetica Neue", sans-serif;
-  font-weight: 300;
+  font-family: "Helvetica Neue", "HelveticaNeue", Helvetica, Arial, sans-serif;
+  font-weight: 100;
 
   header {
     position: absolute;
@@ -52,7 +52,7 @@ body {
       margin-left: 2.5%;
       margin-bottom: 1.5%;
     }
-
+    h1 { font-weight: 300; }
     h2 {
       color: #EDA839;
     }
@@ -71,11 +71,22 @@ body {
     opacity: 1.0;
     position: absolute;
     left: 0;
+
+    .loading {
+      text-align: center;
+      margin-left: auto;
+      margin-right: auto;
+      padding-top: 20%;
+      color: white;
+      opacity: 0.5;
+      width: 100%;
+    }
   }
 
   #placeholder {
     z-index: 0;
     position: absolute;
     left: 0;
+    color: white;
   }
 }
