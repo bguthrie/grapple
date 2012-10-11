@@ -5,11 +5,15 @@ Dynamically resized based on your display dimensions.
 
 ## Usage
 
-  $ git clone https://github.com/bguthrie/grapple
-  $ npm install
-  $ cp public/config/grapple.example.json public/config/grapple.json
-  $ vi public/config/grapple.json
-  $ npm start
+Don't yet. But if you must:
+
+```sh
+$ git clone https://github.com/bguthrie/grapple
+$ npm install
+$ cp public/config/grapple.example.json public/config/grapple.json
+$ vi public/config/grapple.json
+$ npm start
+```
 
 ## TODO
 
