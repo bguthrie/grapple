@@ -8,11 +8,12 @@ Grapple =
     footerHeight = $("footer").height()
     curtainHeight = totalHeight - headerHeight
     viewportHeight = curtainHeight - footerHeight
-
-    console.log "header height", $("header").height(), "footer height", $("footer").height(), "curtain height", curtainHeight, "viewport height", viewportHeight
+    slidemarkerHeight = 0.7 * headerHeight
 
     $('#curtain').css width: $(window).width(), height: curtainHeight, top: headerHeight
     $('#placeholder').css width: $(window).width(), height: viewportHeight, top: headerHeight
+    $('.slidemarkers').css height: slidemarkerHeight
+    $('.slidemarkers li').css width: slidemarkerHeight, height: slidemarkerHeight
 
   series: (slide) ->
     targets = $.map(slide.data.target, (t) -> "target=#{t}").join("&")
@@ -66,6 +67,8 @@ $ ->
 
   settings.done (response) ->
     Grapple.begin("#placeholder", response)
+    Grapple.resize()
+    $("#curtain .loading").fitText(1.0)
 
   $("h1.appname").fitText(3.0)
   $("h1.title").fitText(2.0)
@@ -75,6 +78,3 @@ $ ->
     backgroundColor: $("body").css('backgroundColor')
 
   $(window).resize Grapple.resize
-  Grapple.resize()
-
-  $("#curtain .loading").fitText(1.0)
