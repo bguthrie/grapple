@@ -2,13 +2,14 @@
   "name": "grapple",
   "version": "0.0.0",
   "description": "= Grapple",
-  "main": "index.js",
+  "private": true,
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "coffee app"
   },
   "dependencies": {
-    "express": "",
-    "coffee-script": ""
+    "express": "3.0.0rc5",
+    "coffee-script": "*",
+    "jade": "*"
   },
   "repository": "",
   "author": "",

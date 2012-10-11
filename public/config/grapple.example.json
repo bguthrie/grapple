@@ -1,0 +1,30 @@
+[
+  {
+    "data": {
+      "target": [
+        "stats.gauges.myproject.virality", 
+        "movingAverage(stats.gauges.myproject.virality,1440)", 
+        "movingAverage(stats.gauges.myproject.virality,60)"
+      ],
+      "from": "-1week"
+    },
+    "colors": ["#bbb", "red", "white"],
+    "host": "http://graphite.example.com",
+    "title": "New members per each additional member",
+    "subtitle": "Raw, 60-point, and 1440-point moving averages, one week"
+  },
+
+  {
+    "data": {
+      "target": [
+        "movingAverage(stats_counts.myproject.emails_sent.count,60)",
+        "movingAverage(stats_counts.myproject.emails_opened.count,60)",
+        "movingAverage(stats_counts.myproject.emails_clicked.count,60)"
+      ],
+      "from": "-1week"
+    },
+    "host": "http://graphite.example.com",
+    "title": "Emails sent, opened, clicked",
+    "subtitle": "60-point moving averages, one week"
+  }
+]
