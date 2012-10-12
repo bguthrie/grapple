@@ -16,7 +16,9 @@ Grapple =
     $('.slidemarkers li').css width: slidemarkerHeight, height: slidemarkerHeight
 
   begin: (config) ->
-    slides = $.map config.slides, (slide) -> Grapple.Slide.chart($.extend(slide, host: config.graphiteHost))
+    slides = $.map config.slides, (slide) ->
+      Grapple.Slide.chart $.extend(slide, host: config.graphiteHost)
+
     slideIndex = 0
 
     for slide in slides
@@ -33,7 +35,8 @@ Grapple =
 
     renderNextSlide = () ->
       console.log "Rendering slide", slideIndex
-      slides[slideIndex].refresh (data) ->
+      slide = slides[slideIndex]
+      slide.refresh (data) ->
         behindCurtain () ->
           slide.render "#placeholder", data
           timeout config.refreshInterval, renderNextSlide
@@ -47,7 +50,6 @@ Grapple =
       graphiteUrl = "#{slide.host}/render?#{targets}&from=#{slide.data.from}&format=json"
 
       render: (root, datapoints) ->
-        console.log "Rendering data"
         $.plot root, datapoints, xaxis: { mode: "time", timeformat: "%m/%d %I%p", color: "white" }, yaxis: { color: "white" }, grid: { color: "#333" }, colors: slide.colors
         $("h1.title").text slide.title
         $("h2.subtitle").text slide.subtitle
