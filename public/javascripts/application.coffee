@@ -36,7 +36,7 @@ Grapple =
       slides[slideIndex].refresh (data) ->
         behindCurtain () ->
           slide.render "#placeholder", data
-          timeout config.interval, renderNextSlide
+          timeout config.refreshInterval, renderNextSlide
 
     renderNextSlide()
 
