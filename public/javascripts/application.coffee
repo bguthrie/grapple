@@ -9,7 +9,7 @@ Grapple =
     curtainHeight = totalHeight - headerHeight
     viewportHeight = curtainHeight - footerHeight
     slidemarkerHeight = 0.7 * headerHeight
-    chartLabelFontSize = 0.4 * headerHeight
+    chartLabelFontSize = 0.35 * headerHeight
 
     $('#curtain').css width: $(window).width(), height: curtainHeight, top: headerHeight
     $('#placeholder').css width: $(window).width(), height: viewportHeight, top: headerHeight, fontSize: chartLabelFontSize

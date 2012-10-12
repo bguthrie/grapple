@@ -5,6 +5,7 @@
 }
 
 @background: #071521;
+@left-distance: 3%;
 
 body {
   background-color: @background;
@@ -19,7 +20,7 @@ body {
     left: 0;
 
     h1 {
-      margin-left: 2.5%;
+      margin-left: @left-distance;
     }
   }
 
@@ -47,13 +48,11 @@ body {
 
     .titles {
       border-radius: 8px;
-      margin-left: 2.5%;
+      margin-left: @left-distance;
       margin-bottom: 1.5%;
     }
-    h1 { font-weight: 300; text-transform: uppercase; }
-    h2 {
-      color: #EDA839;
-    }
+    h1 { font-weight: 500; text-transform: uppercase; }
+    h2 { font-weight: 300; color: #EDA839; }
   }
 
   h1, h2, h3, h4, h5, h6 {
