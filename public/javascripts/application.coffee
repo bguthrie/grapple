@@ -15,28 +15,11 @@ Grapple =
     $('#placeholder').css width: $(window).width(), height: viewportHeight, top: headerHeight, fontSize: chartLabelFontSize
     $('.slidemarkers li').css width: slidemarkerHeight, height: slidemarkerHeight
 
-  series: (slide) ->
-    targets = $.map(slide.data.target, (t) -> "target=#{t}").join("&")
-    graphiteUrl = "#{slide.host}/render?#{targets}&from=#{slide.data.from}&format=json"
-
-    (callback) ->
-      chartData = $.ajax graphiteUrl,
-        method: "get",
-        dataType: "jsonp",
-        jsonp: "jsonp"
-
-      chartData.error (response) ->
-        console.log "error reloading", graphiteUrl
-
-      chartData.done (response) ->
-        datapoints = response.map (target) -> ( target.datapoints.map (p) -> [ p[1] * 1000, p[0] ] )
-        callback $.extend(slide, datapoints: datapoints)
-
-  begin: (root, allSlides) ->
-    allSeries = $.map allSlides, (slide) -> Grapple.series(slide)
+  begin: (config) ->
+    slides = $.map config.slides, (slide) -> Grapple.Slide.chart($.extend(slide, host: config.graphiteHost))
     slideIndex = 0
 
-    for series in allSeries
+    for slide in slides
       $("ul.slidemarkers").append $("<li>")
 
     behindCurtain = (renderSlide) ->
@@ -44,20 +27,42 @@ Grapple =
       $('#curtain').fadeTo 500, 1.0, () ->
         renderSlide()
         $( $(".slidemarkers li")[slideIndex] ).fadeTo 1000, 0.6
-        slideIndex = ( slideIndex + 1 ) % allSeries.length
+        slideIndex = ( slideIndex + 1 ) % slides.length
         $('#curtain').fadeTo 1000, 0.0
         $("#curtain .loading").remove()
 
     renderNextSlide = () ->
       console.log "Rendering slide", slideIndex
-      allSeries[slideIndex] (slide) ->
+      slides[slideIndex].refresh (data) ->
         behindCurtain () ->
-          $.plot root, slide.datapoints, xaxis: { mode: "time", timeformat: "%m/%d %I%p", color: "white" }, yaxis: { color: "white" }, grid: { color: "#333" }, colors: slide.colors
-          $("h1.title").text slide.title
-          $("h2.subtitle").text slide.subtitle
-          timeout 5000, renderNextSlide
+          slide.render "#placeholder", data
+          timeout config.interval, renderNextSlide
 
     renderNextSlide()
+
+  Slide:
+    chart: (slide) ->
+      spec = slide.data
+      targets = $.map(spec.target, (t) -> "target=#{t}").join("&")
+      graphiteUrl = "#{slide.host}/render?#{targets}&from=#{slide.data.from}&format=json"
+
+      render: (root, datapoints) ->
+        console.log "Rendering data"
+        $.plot root, datapoints, xaxis: { mode: "time", timeformat: "%m/%d %I%p", color: "white" }, yaxis: { color: "white" }, grid: { color: "#333" }, colors: slide.colors
+        $("h1.title").text slide.title
+        $("h2.subtitle").text slide.subtitle
+
+      refresh: (callback) ->
+        console.log "Refreshing data"
+        chartData = $.ajax graphiteUrl, method: "get", dataType: "jsonp", jsonp: "jsonp"
+
+        chartData.error (response) ->
+          console.log "error reloading", graphiteUrl
+
+        chartData.done (response) ->
+          datapoints = response.map (target) -> ( target.datapoints.map (p) -> [ p[1] * 1000, p[0] ] )
+          callback datapoints
+
 
 $ ->
   settings = $.get("config/grapple.json")
@@ -66,7 +71,7 @@ $ ->
     console.log "Error finding or parsing grapple.json"
 
   settings.done (response) ->
-    Grapple.begin("#placeholder", response)
+    Grapple.begin(response)
     Grapple.resize()
     $("#curtain .loading").fitText(1.0)
 
