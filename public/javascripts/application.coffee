@@ -9,10 +9,10 @@ Grapple =
     curtainHeight = totalHeight - headerHeight
     viewportHeight = curtainHeight - footerHeight
     slidemarkerHeight = 0.7 * headerHeight
+    chartLabelFontSize = 0.4 * headerHeight
 
     $('#curtain').css width: $(window).width(), height: curtainHeight, top: headerHeight
-    $('#placeholder').css width: $(window).width(), height: viewportHeight, top: headerHeight
-    $('.slidemarkers').css height: slidemarkerHeight
+    $('#placeholder').css width: $(window).width(), height: viewportHeight, top: headerHeight, fontSize: chartLabelFontSize
     $('.slidemarkers li').css width: slidemarkerHeight, height: slidemarkerHeight
 
   series: (slide) ->
@@ -52,7 +52,7 @@ Grapple =
       console.log "Rendering slide", slideIndex
       allSeries[slideIndex] (slide) ->
         behindCurtain () ->
-          $.plot root, slide.datapoints, xaxis: { mode: "time" }, colors: slide.colors
+          $.plot root, slide.datapoints, xaxis: { mode: "time", timeformat: "%m/%d %I%p", color: "white" }, yaxis: { color: "white" }, grid: { color: "#333" }, colors: slide.colors
           $("h1.title").text slide.title
           $("h2.subtitle").text slide.subtitle
           timeout 5000, renderNextSlide
