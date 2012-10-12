@@ -11,6 +11,7 @@
       "from": "-1week"
     },
     "colors": ["#bbb", "red", "white"],
+    "labels": ["10 minutes", "10 hours", "10 days"],
     "title": "New members per each additional member",
     "subtitle": "Raw, 60-point, and 1440-point moving averages, one week"
   }, {
@@ -22,6 +23,7 @@
       ],
       "from": "-1week"
     },
+    "labels": ["Sent", "Opened", "Clicked"],
     "title": "Emails sent, opened, clicked",
     "subtitle": "60-point moving averages, one week"
   } ]

@@ -16,7 +16,7 @@ Grapple =
     $('.slidemarkers li').css width: slidemarkerHeight, height: slidemarkerHeight
 
   begin: (config) ->
-    slides = $.map config.slides, (slide) ->
+    slides = config.slides.map (slide) ->
       Grapple.Slide.chart $.extend(slide, host: config.graphiteHost)
 
     slideIndex = 0
@@ -46,11 +46,23 @@ Grapple =
   Slide:
     chart: (slide) ->
       spec = slide.data
-      targets = $.map(spec.target, (t) -> "target=#{t}").join("&")
+      targets = (spec.target.map (t) -> "target=#{t}").join("&")
       graphiteUrl = "#{slide.host}/render?#{targets}&from=#{slide.data.from}&format=json"
+      labels = slide.labels || spec.target
 
       render: (root, datapoints) ->
-        $.plot root, datapoints, xaxis: { mode: "time", timeformat: "%m/%d %I%p", color: "white" }, yaxis: { color: "white" }, grid: { color: "#333" }, colors: slide.colors
+        series = _.zip(labels, datapoints).map (a) -> { label: a[0], data: a[1] }
+
+        $.plot root, series,
+          xaxis: { mode: "time", timeformat: "%m/%d %I%p", color: "white" },
+          yaxis: { color: "white" },
+          grid: { color: "#777", borderWidth: 1 },
+          colors: slide.colors
+          legend: { container: "#legend", show: true, position: "sw", noColumns: series.length, backgroundOpacity: 0.0 }
+
+        $("#legend > table").css fontSize: "large", color: "white"
+        $("#legend .legendColorBox > div").css border: "none"
+
         $("h1.title").text slide.title
         $("h2.subtitle").text slide.subtitle
 
