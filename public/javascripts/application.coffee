@@ -15,6 +15,9 @@ Grapple =
     $('#placeholder').css width: $(window).width(), height: viewportHeight, top: headerHeight, fontSize: chartLabelFontSize
     $('.slidemarkers li').css width: slidemarkerHeight, height: slidemarkerHeight
 
+    fontSize = $("#legend").css "fontSize"
+    $("#legend .color").css width: fontSize, height: fontSize
+
   begin: (config) ->
     slides = config.slides.map (slide) ->
       Grapple.Slide.chart $.extend(slide, host: config.graphiteHost)
@@ -51,7 +54,7 @@ Grapple =
       labels = slide.labels || spec.target
 
       render: (root, datapoints) ->
-        series = _.zip(labels, datapoints).map (a) -> { label: a[0], data: a[1] }
+        series = _.zip(labels, datapoints).map (s) -> { label: s[0], data: s[1] }
 
         $.plot root, series,
           xaxis: { mode: "time", timeformat: "%m/%d %I%p", color: "white" },
@@ -60,8 +63,20 @@ Grapple =
           colors: slide.colors
           legend: { container: "#legend", show: true, position: "sw", noColumns: series.length, backgroundOpacity: 0.0 }
 
-        $("#legend > table").css fontSize: "large", color: "white"
-        $("#legend .legendColorBox > div").css border: "none"
+        labels = $("#legend .legendLabel").map -> console.log(this); $(this).text()
+        colors = $("#legend .legendColorBox").map -> $(this).find("> div > div").css("borderColor")
+        legend = _.zip labels, colors
+        colorSize = $("#legend").css "fontSize"
+
+        $("#legend table").remove()
+        for pair in _.zip(labels, colors)
+          [label, color] = pair
+
+          seriesLegend = $("<div>").addClass("series").append(
+            $("<div>").addClass("color").css(backgroundColor: color, width: colorSize, height: colorSize),
+            $("<div>").addClass("label").text(label))
+
+          $("#legend").append seriesLegend
 
         $("h1.title").text slide.title
         $("h2.subtitle").text slide.subtitle
@@ -92,6 +107,7 @@ $ ->
   $("h1.appname").fitText(3.0)
   $("h1.title").fitText(2.0)
   $("h2.subtitle").fitText(4.0)
+  $("#legend").fitText(4.5)
 
   $("#curtain").css
     backgroundColor: $("body").css('backgroundColor')
