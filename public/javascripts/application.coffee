@@ -20,6 +20,7 @@ Grapple =
         plot.resize()
         plot.setupGrid()
         plot.draw()
+        plot.redrawLegend("#legend")
 
     fontSize = $("#legend").css "fontSize"
     $("#legend .color").css width: fontSize, height: fontSize
@@ -86,27 +87,11 @@ Grapple =
       render: (root, datapoints) ->
         s.data = datapoints[i] for s, i in series
 
-        redrawLegend = (legend) ->
-          legend = $(legend)
-          labels = legend.find(".legendLabel").map -> $(this).text()
-          colors = legend.find(".legendColorBox").map -> $(this).find("> div > div").css("borderColor")
-          colorSize = legend.css "fontSize"
-
-          legend.find("table").remove()
-          for pair in _.zip(labels, colors)
-            [label, color] = pair
-
-            seriesLegend = $("<div>").addClass("series").append(
-              $("<div>").addClass("color").css(backgroundColor: color, width: colorSize, height: colorSize),
-              $("<div>").addClass("label").text(label))
-
-            legend.append seriesLegend
-
         if plot = $(root).data("plot")
           plot.setData(series)
           plot.setupGrid()
           plot.draw()
-          redrawLegend("#legend")
+          plot.redrawLegend("#legend")
         else
           plot = $.plot root, series,
             xaxis: { mode: "time", timeformat: "%m/%d %I%p", color: "white" },
@@ -115,8 +100,24 @@ Grapple =
             colors: slide.colors
             legend: { container: "#legend", show: true, position: "sw", noColumns: series.length, backgroundOpacity: 0.0 }
 
+          plot.redrawLegend = (legend) ->
+            legend = $(legend)
+            labels = legend.find(".legendLabel").map -> $(this).text()
+            colors = legend.find(".legendColorBox").map -> $(this).find("> div > div").css("borderColor")
+            colorSize = legend.css "fontSize"
+
+            legend.find("table").remove()
+            for pair in _.zip(labels, colors)
+              [label, color] = pair
+
+              seriesLegend = $("<div>").addClass("series").append(
+                $("<div>").addClass("color").css(backgroundColor: color, width: colorSize, height: colorSize),
+                $("<div>").addClass("label").text(label))
+
+              legend.append seriesLegend
+
           $(root).data("plot", plot)
-          redrawLegend("#legend")
+          plot.redrawLegend("#legend")
           $("h1.title").text slide.title
           $("h2.subtitle").text slide.subtitle
 
