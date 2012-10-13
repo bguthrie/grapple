@@ -136,7 +136,12 @@ $ ->
   settings = $.get("config/grapple.json")
 
   settings.fail (response) ->
-    console.log "Error finding or parsing grapple.json"
+    $("#curtain .loading").text "error"
+    $("#curtain .more").text("could not load or parse configuration | ")
+    $("#curtain .more").append($("<a>").text("help").attr("href", "https://github.com/bguthrie/grapple/blob/master/README.md"))
+
+    Grapple.resize()
+    $("#curtain .loading").fitText(1.0)
 
   settings.done (response) ->
     Grapple.begin(response)
@@ -147,6 +152,7 @@ $ ->
   $("h1.title").fitText(2.0)
   $("h2.subtitle").fitText(4.0)
   $("#legend").fitText(4.5)
+  $("#curtain .loading").fitText(1.0)
 
   $("#curtain").css
     backgroundColor: $("body").css('backgroundColor')
