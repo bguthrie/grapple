@@ -12,37 +12,66 @@ Grapple =
     chartLabelFontSize = 0.35 * headerHeight
 
     $('#curtain').css width: $(window).width(), height: curtainHeight, top: headerHeight
-    $('#placeholder').css width: $(window).width(), height: viewportHeight, top: headerHeight, fontSize: chartLabelFontSize
+    $('.slide').css width: $(window).width(), height: viewportHeight, top: headerHeight, fontSize: chartLabelFontSize
     $('.slidemarkers li').css width: slidemarkerHeight, height: slidemarkerHeight
+
+    _.each $('.slide'), (s) ->
+      if plot = $(s).data('plot')
+        plot.resize()
+        plot.setupGrid()
+        plot.draw()
 
     fontSize = $("#legend").css "fontSize"
     $("#legend .color").css width: fontSize, height: fontSize
 
   begin: (config) ->
+    slideIndex = 0
+
     slides = config.slides.map (slide) ->
       Grapple.Slide.chart $.extend(slide, host: config.graphiteHost)
 
-    slideIndex = 0
-
     for slide in slides
       $("ul.slidemarkers").append $("<li>")
+      $("#viewport").append $("<div>").addClass("slide")
 
-    behindCurtain = (renderSlide) ->
-      $(".slidemarkers li").fadeTo 500, 0.2
-      $('#curtain').fadeTo 500, 1.0, () ->
-        renderSlide()
-        $( $(".slidemarkers li")[slideIndex] ).fadeTo 1000, 0.6
-        slideIndex = ( slideIndex + 1 ) % slides.length
-        $('#curtain').fadeTo 1000, 0.0
-        $("#curtain .loading").remove()
+    curtain = $("#curtain")
+    containers = $(".slide")
+    markers = $(".slidemarkers li")
 
     renderNextSlide = () ->
       console.log "Rendering slide", slideIndex
       slide = slides[slideIndex]
-      slide.refresh (data) ->
-        behindCurtain () ->
-          slide.render "#placeholder", data
-          timeout config.refreshInterval, renderNextSlide
+      marker = $(markers[slideIndex])
+      container = $(containers[slideIndex])
+
+      if slides.length is 1
+        slide.refresh (data) ->
+          if curtain.find(".loading").length > 0
+            curtain.fadeTo 1000, 1.0, () ->
+              container.show()
+              slide.render container, data
+              curtain.find(".loading").remove()
+              marker.fadeTo 1000, 0.6
+              curtain.fadeTo 1000, 0.0
+          else
+            slide.render container, data
+
+        timeout config.refreshInterval, renderNextSlide
+
+      else
+        slide.refresh (data) ->
+          markers.fadeTo 1000, 0.2
+          curtain.fadeTo 1000, 1.0, () ->
+            containers.hide()
+            container.show()
+            slide.render container, data
+
+            marker.fadeTo 1000, 0.6
+            curtain.fadeTo 1000, 0.0
+            curtain.find(".loading").remove()
+
+            slideIndex = ( slideIndex + 1 ) % slides.length
+            timeout config.refreshInterval, renderNextSlide
 
     renderNextSlide()
 
@@ -52,37 +81,46 @@ Grapple =
       targets = (spec.target.map (t) -> "target=#{t}").join("&")
       graphiteUrl = "#{slide.host}/render?#{targets}&from=#{slide.data.from}&format=json"
       labels = slide.labels || spec.target
+      series = labels.map (label) -> { label: label, data: [] }
 
       render: (root, datapoints) ->
-        series = _.zip(labels, datapoints).map (s) -> { label: s[0], data: s[1] }
+        s.data = datapoints[i] for s, i in series
 
-        $.plot root, series,
-          xaxis: { mode: "time", timeformat: "%m/%d %I%p", color: "white" },
-          yaxis: { color: "white" },
-          grid: { color: "#777", borderWidth: 1 },
-          colors: slide.colors
-          legend: { container: "#legend", show: true, position: "sw", noColumns: series.length, backgroundOpacity: 0.0 }
+        redrawLegend = (legend) ->
+          legend = $(legend)
+          labels = legend.find(".legendLabel").map -> $(this).text()
+          colors = legend.find(".legendColorBox").map -> $(this).find("> div > div").css("borderColor")
+          colorSize = legend.css "fontSize"
 
-        labels = $("#legend .legendLabel").map -> console.log(this); $(this).text()
-        colors = $("#legend .legendColorBox").map -> $(this).find("> div > div").css("borderColor")
-        legend = _.zip labels, colors
-        colorSize = $("#legend").css "fontSize"
+          legend.find("table").remove()
+          for pair in _.zip(labels, colors)
+            [label, color] = pair
 
-        $("#legend table").remove()
-        for pair in _.zip(labels, colors)
-          [label, color] = pair
+            seriesLegend = $("<div>").addClass("series").append(
+              $("<div>").addClass("color").css(backgroundColor: color, width: colorSize, height: colorSize),
+              $("<div>").addClass("label").text(label))
 
-          seriesLegend = $("<div>").addClass("series").append(
-            $("<div>").addClass("color").css(backgroundColor: color, width: colorSize, height: colorSize),
-            $("<div>").addClass("label").text(label))
+            legend.append seriesLegend
 
-          $("#legend").append seriesLegend
+        if plot = $(root).data("plot")
+          plot.setData(series)
+          plot.setupGrid()
+          plot.draw()
+          redrawLegend("#legend")
+        else
+          plot = $.plot root, series,
+            xaxis: { mode: "time", timeformat: "%m/%d %I%p", color: "white" },
+            yaxis: { color: "white" },
+            grid: { color: "#777", borderWidth: 1 },
+            colors: slide.colors
+            legend: { container: "#legend", show: true, position: "sw", noColumns: series.length, backgroundOpacity: 0.0 }
 
-        $("h1.title").text slide.title
-        $("h2.subtitle").text slide.subtitle
+          $(root).data("plot", plot)
+          redrawLegend("#legend")
+          $("h1.title").text slide.title
+          $("h2.subtitle").text slide.subtitle
 
       refresh: (callback) ->
-        console.log "Refreshing data"
         chartData = $.ajax graphiteUrl, method: "get", dataType: "jsonp", jsonp: "jsonp"
 
         chartData.error (response) ->
