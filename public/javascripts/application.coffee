@@ -1,7 +1,34 @@
 interval = (ms, fn) -> window.setInterval fn, ms
 timeout  = (ms, fn) -> window.setTimeout fn, ms
 
-Grapple = 
+RandomData =
+  generator: () ->
+    totalSeconds = 3600
+    totalPoints = totalSeconds / 10
+    data = []
+    date = new Date()
+    now = Math.floor( date.getTime() / 1000 )
+    startTime = now - totalSeconds
+
+    refresh: () ->
+      if data.length > 0
+        data = data.slice 1
+
+      while data.length < totalPoints
+        previous = if data.length > 0
+          data[data.length - 1]
+        else
+          [ startTime, 50 ]
+
+        [ oldTime, oldY ] = previous
+        y = oldY + Math.random() * 10 - 5
+        time = oldTime + 10
+
+        data.push [ time, y ]
+
+      data
+
+window.Grapple =
   resize: () ->
     totalHeight = $(window).height()
     totalWidth = $(window).width()
@@ -63,24 +90,32 @@ Grapple =
 
     renderNextSlide()
 
+
+
   Slide:
+
     chart: (slide) ->
       spec = slide.data
-      targets = (spec.target.map (t) -> "target=#{t}").join("&")
-      graphiteUrl = "#{slide.host}/render?#{targets}&from=#{slide.data.from}&format=json"
+
+      if spec is "random"
+        generator = RandomData.generator()
+      else
+        targets = (spec.target.map (t) -> "target=#{t}").join("&")
+        graphiteUrl = "#{slide.host}/render?#{targets}&from=#{slide.data.from}&format=json"
+
       labels = slide.labels || spec.target
       series = labels.map (label) -> { label: label, data: [] }
       plot = null
 
-      render: (root, datapoints) ->
+      render = (root, datapoints) ->
         if plot? 
           @rerender; return
 
         s.data = datapoints[i] for s, i in series
 
         placeholder = $("<div>").addClass("placeholder")
-        title = $("<h1>").addClass("title").text("Lorem Ipsum")
-        subtitle = $("<h2>").addClass("subtitle").text("Dolor Sit Amet")
+        title = $("<h1>").addClass("title").text(slide.title)
+        subtitle = $("<h2>").addClass("subtitle").text(slide.subtitle)
         legend = $("<div>").addClass("legend").text("Legend")
         footer = $("<div>").addClass("footer").append(legend, title, subtitle)
         $(root).append(placeholder, footer)
@@ -116,27 +151,31 @@ Grapple =
         $(root).data("plot", plot)
         plot.redrawLegend()
 
-        interval 10000, () -> 
-          @refresh (datapoints) ->
-            @rerender datapoints
+        interval 10000, () ->
+          refresh (datapoints) ->
+            rerender datapoints
 
-      rerender: (datapoints) ->
+      rerender = (datapoints) ->
         s.data = datapoints[i] for s, i in series
         plot.setData(series)
         plot.setupGrid()
         plot.draw()
         plot.redrawLegend()
 
-      refresh: (callback) ->
-        chartData = $.ajax graphiteUrl, method: "get", dataType: "jsonp", jsonp: "jsonp"
+      refresh = (callback) ->
+        if generator
+          callback [ generator.refresh() ]
+        else
+          chartData = $.ajax graphiteUrl, method: "get", dataType: "jsonp", jsonp: "jsonp"
 
-        chartData.error (response) ->
-          console.log "error reloading", graphiteUrl
+          chartData.error (response) ->
+            console.log "error reloading", graphiteUrl
 
-        chartData.done (response) ->
-          datapoints = response.map (target) -> ( target.datapoints.map (p) -> [ p[1] * 1000, p[0] ] )
-          callback datapoints
+          chartData.done (response) ->
+            datapoints = response.map (target) -> ( target.datapoints.map (p) -> [ p[1] * 1000, p[0] ] )
+            callback datapoints
 
+      refresh: refresh, render: render
 
 $ ->
   settings = $.get("config/grapple.json")
