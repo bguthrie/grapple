@@ -40,9 +40,22 @@ window.Grapple =
     $("#viewport").css height: curtainHeight, width: totalWidth, top: headerHeight, fontSize: chartLabelFontSize
     $('.slidemarkers li').css width: slidemarkerHeight, height: slidemarkerHeight
 
-    _.each $('.slide'), (s) ->
+    Grapple.resizeSlides()
+
+  resizeSlides: () ->
+    totalHeight = $(window).height()
+    totalWidth = $(window).width()
+    headerHeight = $("header").height()
+    curtainHeight = totalHeight - headerHeight
+
+    slides = $(".slide")
+
+    widthOfAllSlides = totalWidth * slides.length
+    $(".slides").css width: widthOfAllSlides
+
+    for s, i in slides
       $s = $(s)
-      $s.css height: curtainHeight, width: width: totalWidth
+      $s.css height: curtainHeight, width: totalWidth, left: totalWidth * i
       $s.find('.placeholder').css height: $s.height() - $s.find(".footer").height()
 
       if plot = $s.data('plot')
@@ -51,8 +64,16 @@ window.Grapple =
         plot.draw()
         plot.redrawLegend("")
 
-    fontSize = $("#legend").css "fontSize"
-    $("#legend .color").css width: fontSize, height: fontSize
+  slideTo: (slideIndex, callback) ->
+    console.log "Sliding to", slideIndex
+    if slideIndex >= 0
+      markers = $(".slidemarkers li")
+      markers.transition opacity: 0.2, 500, '_default', () ->
+        $(markers[slideIndex]).transition opacity: 0.8, 500
+
+    totalWidth = $(window).width()
+    portPosition = totalWidth * -slideIndex
+    $(".slides").transition x: "#{portPosition}px", 1000, '_default', callback
 
   begin: (config) ->
     slideIndex = 0
@@ -62,35 +83,26 @@ window.Grapple =
     slides = config.slides.map (slide) ->
       Grapple.Slide.chart $.extend(slide, host: config.graphiteHost)
 
-    for slide in slides
+    for slide, i in slides
       $("ul.slidemarkers").append $("<li>")
-      slideContainer.append $("<div>").addClass("slide")
+      slideContainer.append $("<div>").addClass("slide").attr("id", i)
 
-    # curtain = $("#curtain")
+    Grapple.resizeSlides()
     containers = slideContainer.find(".slide")
-    markers = $(".slidemarkers li")
 
-    renderFirstSlide = (container, slide, data) ->
-      width = $(window).width()
-      container.transition x: "-#{width}px", () ->
-        slide.render container, data
-        viewport.find(".loading").fadeOut () ->
-          container.transition x: "0px"
-
-    renderNextSlide = () ->
-      console.log "Rendering slide", slideIndex
-      slide = slides[slideIndex]
-      marker = $(markers[slideIndex])
-      container = $(containers[slideIndex])
-
-      # TODO Position all slides next to each other.
-
+    _.each slides, (slide, i) ->
       slide.refresh (data) ->
-        renderFirstSlide(container, slide, data) if viewport.find(".loading").length > 0
+        if i is 0
+          Grapple.slideTo -1, () ->
+            slide.render $(containers[i]), data
+            viewport.find(".loading").fadeOut () ->
+              Grapple.slideTo(i)
+        else
+          slide.render $(containers[i]), data
 
-    renderNextSlide()
-
-
+    interval config.transitionInterval, () ->
+      slideIndex = ( slideIndex + 1 ) % slides.length
+      Grapple.slideTo(slideIndex)
 
   Slide:
 
@@ -105,12 +117,8 @@ window.Grapple =
 
       labels = slide.labels || spec.target
       series = labels.map (label) -> { label: label, data: [] }
-      plot = null
 
       render = (root, datapoints) ->
-        if plot? 
-          @rerender; return
-
         s.data = datapoints[i] for s, i in series
 
         placeholder = $("<div>").addClass("placeholder")
@@ -153,9 +161,9 @@ window.Grapple =
 
         interval 10000, () ->
           refresh (datapoints) ->
-            rerender datapoints
+            rerender plot, datapoints
 
-      rerender = (datapoints) ->
+      rerender = (plot, datapoints) ->
         s.data = datapoints[i] for s, i in series
         plot.setData(series)
         plot.setupGrid()
@@ -175,23 +183,22 @@ window.Grapple =
             datapoints = response.map (target) -> ( target.datapoints.map (p) -> [ p[1] * 1000, p[0] ] )
             callback datapoints
 
-      refresh: refresh, render: render
+      refresh: refresh, render: render, slide: slide
 
 $ ->
   settings = $.get("config/grapple.json")
 
   settings.fail (response) ->
-    $("#curtain .loading").text "error"
-    $("#curtain .more").text("could not load or parse configuration | ")
-    $("#curtain .more").append($("<a>").text("help").attr("href", "https://github.com/bguthrie/grapple/blob/master/README.md"))
+    $("#viewport .loading").text "error"
+    $("#viewport .more").text("could not load or parse configuration | ")
+    $("#viewport .more").append($("<a>").text("help").attr("href", "https://github.com/bguthrie/grapple/blob/master/README.md"))
 
     Grapple.resize()
-    $("#curtain .loading").fitText(1.0)
 
   settings.done (response) ->
+    $("#viewport .loading").text("please wait")
     Grapple.begin(response)
     Grapple.resize()
-    $("#curtain .loading").fitText(1.0)
 
   $("h1.appname").fitText(3.0)
   $("#viewport .loading").fitText(1.0)
