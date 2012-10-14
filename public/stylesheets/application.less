@@ -5,6 +5,8 @@
 }
 
 @background: #071521;
+@error-red: #C74242;
+@dark-yellow: #EDA839;
 @left-distance: 3%;
 
 body {
@@ -40,21 +42,19 @@ body {
     }
   }
 
-  footer {
+  .footer {
     position: absolute;
     width: 100%;
     bottom: 0;
     left: 0;
 
-    .titles {
-      border-radius: 8px;
-      margin-left: @left-distance;
-      margin-bottom: 1.5%;
-    }
-    h1 { font-weight: 500; text-transform: uppercase; margin-top: -0.5%; margin-bottom: -0.5%; }
-    h2 { font-weight: 300; color: #EDA839; }
+    padding-bottom: 1.5%;
+    padding-left: @left-distance;
 
-    #legend {
+    h1 { font-weight: 500; text-transform: uppercase; margin-top: -0.5%; margin-bottom: -0.5%; }
+    h2 { font-weight: 300; color: @dark-yellow; }
+
+    .legend {
       margin-top: 2%;
       .series {
         display: inline-block; clear: both; margin-right: 4%;
@@ -70,13 +70,6 @@ body {
 
   #viewport {
     position: relative;
-  }
-
-  #curtain {
-    z-index: 1;
-    opacity: 1.0;
-    position: absolute;
-    left: 0;
 
     .loading {
       text-align: center;
@@ -92,7 +85,7 @@ body {
       text-align: center;
       margin-left: auto;
       margin-right: auto;
-      color: #C74242;
+      color: @error-red;
       font-weight: 300;
       opacity: 0.5;
       width: 100%;
