@@ -22,7 +22,7 @@ RandomData =
 
         [ oldTime, oldY ] = previous
         y = oldY + Math.random() * 10 - 5
-        time = oldTime + 10
+        time = oldTime + 10000
 
         data.push [ time, y ]
 
