@@ -26,19 +26,23 @@ body {
     }
   }
 
-  ul.slidemarkers {
+  .slidemarkers {
     position: absolute;
     width: 100%;
     top: 1%;
     left: 0;
     text-align: center;
 
-    li {
+    a {
       background-color: white;
       opacity: 0.2;
       border-radius: 4px;
       display: inline-block;
       margin-left: 0.5%;
+
+      &:hover {
+        opacity: 0.5;
+      }
     }
   }
 

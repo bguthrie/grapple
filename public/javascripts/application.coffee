@@ -38,7 +38,7 @@ window.Grapple =
     chartLabelFontSize = 0.35 * headerHeight
 
     $("#viewport").css height: curtainHeight, width: totalWidth, top: headerHeight, fontSize: chartLabelFontSize
-    $('.slidemarkers li').css width: slidemarkerHeight, height: slidemarkerHeight
+    $('.slidemarkers a').css width: slidemarkerHeight, height: slidemarkerHeight
 
     Grapple.resizeSlides()
 
@@ -62,7 +62,8 @@ window.Grapple =
   slideTo: (slideIndex, callback) ->
     console.log "Sliding to", slideIndex
     if slideIndex >= 0
-      markers = $(".slidemarkers li")
+      window.history.pushState {}, "", "#" + slideIndex
+      markers = $(".slidemarkers a")
       markers.transition opacity: 0.2, 500, '_default', () ->
         $(markers[slideIndex]).transition opacity: 0.8, 500
 
@@ -88,21 +89,30 @@ window.Grapple =
       Grapple.Slide.chart slide
 
     for slide, i in slides
-      $("ul.slidemarkers").append $("<li>")
+      $(".slidemarkers").append $("<a>").attr("href", "#" + i)
       slideContainer.append $("<div>").addClass("slide").attr("id", i)
+
+    $(".slidemarkers a").click (evt) ->
+      Grapple.slideTo parseInt($(this).attr("href").slice(1), 10)
+      evt.preventDefault()
 
     Grapple.resizeSlides()
     containers = slideContainer.find(".slide")
 
-    _.each slides, (slide, i) ->
+    currentIndex = parseInt(window.location.hash.slice(1), 10) || 0
+    console.log "index", currentIndex
+
+    Grapple.slideTo -1, () ->
+      slide = slides[currentIndex]
       slide.refresh (data) ->
-        if i is 0
-          Grapple.slideTo -1, () ->
+        slide.render $(containers[currentIndex]), data
+        viewport.find(".loading").fadeOut () ->
+          Grapple.slideTo(currentIndex)
+
+      for slide, i in slides
+        if i isnt currentIndex
+          slide.refresh (data) ->
             slide.render $(containers[i]), data
-            viewport.find(".loading").fadeOut () ->
-              Grapple.slideTo(i)
-        else
-          slide.render $(containers[i]), data
 
     if config.rotate
       interval config.transitionInterval, () ->
