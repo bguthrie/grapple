@@ -57,12 +57,7 @@ window.Grapple =
       $s = $(s)
       $s.css height: curtainHeight, width: totalWidth, left: totalWidth * i
       $s.find('.placeholder').css height: $s.height() - $s.find(".footer").height()
-
-      if plot = $s.data('plot')
-        plot.resize()
-        plot.setupGrid()
-        plot.draw()
-        plot.redrawLegend("")
+      $s.data('plot')?.redraw()
 
   slideTo: (slideIndex, callback) ->
     console.log "Sliding to", slideIndex
@@ -75,13 +70,22 @@ window.Grapple =
     portPosition = totalWidth * -slideIndex
     $(".slides").transition x: "#{portPosition}px", 1000, '_default', callback
 
-  begin: (config) ->
+  defaults:
+    graphiteHost: "localhost"
+    refreshInterval: 10000
+    transitionInterval: 20000
+    format: "%m/%d %I%p"
+    rotate: true
+
+  begin: (viewport, config) ->
+    config = $.extend {}, Grapple.defaults, config
+    viewport = $(viewport)
     slideIndex = 0
-    viewport = $("#viewport")
     slideContainer = viewport.find(".slides")
 
     slides = config.slides.map (slide) ->
-      Grapple.Slide.chart $.extend(slide, host: config.graphiteHost)
+      slide = $.extend {}, { host: config.graphiteHost, refreshInterval: config.refreshInterval, format: config.format }, slide
+      Grapple.Slide.chart slide
 
     for slide, i in slides
       $("ul.slidemarkers").append $("<li>")
@@ -100,9 +104,10 @@ window.Grapple =
         else
           slide.render $(containers[i]), data
 
-    interval config.transitionInterval, () ->
-      slideIndex = ( slideIndex + 1 ) % slides.length
-      Grapple.slideTo(slideIndex)
+    if config.rotate
+      interval config.transitionInterval, () ->
+        slideIndex = ( slideIndex + 1 ) % slides.length
+        Grapple.slideTo(slideIndex)
 
   Slide:
 
@@ -135,11 +140,17 @@ window.Grapple =
         placeholder.css height: root.height() - footer.height()
 
         plot = $.plot placeholder, series,
-          xaxis: { mode: "time", timeformat: "%m/%d %I%p", color: "white" },
+          xaxis: { mode: "time", timeformat: slide.format, color: "white" },
           yaxis: { color: "white" },
           grid: { color: "#777", borderWidth: 1 },
           colors: slide.colors
           legend: { container: legend, show: true, position: "sw", noColumns: series.length, backgroundOpacity: 0.0 }
+
+        plot.redraw = () ->
+          @resize()
+          @setupGrid()
+          @draw()
+          @redrawLegend()
 
         plot.redrawLegend = () ->
           labels = legend.find(".legendLabel").map -> $(this).text()
@@ -159,16 +170,14 @@ window.Grapple =
         $(root).data("plot", plot)
         plot.redrawLegend()
 
-        interval 10000, () ->
+        interval slide.refreshInterval, () ->
           refresh (datapoints) ->
-            rerender plot, datapoints
+            update plot, datapoints
 
-      rerender = (plot, datapoints) ->
+      update = (plot, datapoints) ->
         s.data = datapoints[i] for s, i in series
         plot.setData(series)
-        plot.setupGrid()
-        plot.draw()
-        plot.redrawLegend()
+        plot.redraw()
 
       refresh = (callback) ->
         if generator
@@ -187,20 +196,20 @@ window.Grapple =
 
 $ ->
   settings = $.get("config/grapple.json")
+  viewport = $("#viewport")
 
   settings.fail (response) ->
-    $("#viewport .loading").text "error"
-    $("#viewport .more").text("could not load or parse configuration | ")
-    $("#viewport .more").append($("<a>").text("help").attr("href", "https://github.com/bguthrie/grapple/blob/master/README.md"))
-
-    Grapple.resize()
+    viewport.find(".loading").text "error"
+    viewport.find(".more").
+      text("could not load or parse configuration | ").
+      append($("<a>").text("help").attr("href", "https://github.com/bguthrie/grapple/blob/master/README.md"))
 
   settings.done (response) ->
-    $("#viewport .loading").text("please wait")
-    Grapple.begin(response)
+    viewport.find(".loading").text("please wait")
+    Grapple.begin(viewport, response)
     Grapple.resize()
 
   $("h1.appname").fitText(3.0)
-  $("#viewport .loading").fitText(1.0)
+  viewport.find(".loading").fitText(1.0)
 
   $(window).resize Grapple.resize
