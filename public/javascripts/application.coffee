@@ -49,9 +49,7 @@ window.Grapple =
     curtainHeight = totalHeight - headerHeight
 
     slides = $(".slide")
-
-    widthOfAllSlides = totalWidth * slides.length
-    $(".slides").css width: widthOfAllSlides
+    $(".slides").css width: totalWidth * slides.length
 
     for s, i in slides
       $s = $(s)
@@ -108,12 +106,19 @@ window.Grapple =
     config = $.extend {}, Grapple.defaults, config
     viewport = $(viewport)
 
+    $("h1.appname").fitText(3.0)
+    viewport.find(".loading").fitText(1.0)
+
     slides = config.slides.map (slide) ->
-      slide = $.extend {}, { host: config.graphiteHost, refreshInterval: config.refreshInterval, format: config.format }, slide
+      extensions = host: config.graphiteHost, refreshInterval: config.refreshInterval, format: config.format
+      slide = $.extend {}, extensions, slide
       Grapple.Slide.chart slide
 
     containers = Grapple.assembleSlides viewport, slides
     currentIndex = Grapple.indexFromUrl(window.location.hash) || 0
+
+    $(window).resize Grapple.resize
+    Grapple.resize()
 
     Grapple.slideTo -1, () ->
       slide = slides[currentIndex]
@@ -163,32 +168,22 @@ window.Grapple =
         placeholder.css height: root.height() - footer.height()
 
         plot = $.plot placeholder, series,
-          xaxis: { mode: "time", timeformat: slide.format, color: "white" },
-          yaxis: { color: "white" },
-          grid: { color: "#777", borderWidth: 1 },
-          colors: slide.colors
-          legend: { container: legend, show: true, position: "sw", noColumns: series.length, backgroundOpacity: 0.0 }
+          xaxis:
+            mode: "time", 
+            timeformat: slide.format
+            color: "white"
+          yaxis:
+            color: "white"
+          grid:
+            color: "#777"
+            borderWidth: 1
+          colors:
+            slide.colors
+          legend:
+            container: legend
+            show: true
 
-        plot.redraw = () ->
-          @resize()
-          @setupGrid()
-          @draw()
-          @redrawLegend()
-
-        plot.redrawLegend = () ->
-          labels = legend.find(".legendLabel").map -> $(this).text()
-          colors = legend.find(".legendColorBox").map -> $(this).find("> div > div").css("borderColor")
-          colorSize = legend.css "fontSize"
-
-          legend.find("table").remove()
-          for pair in _.zip(labels, colors)
-            [label, color] = pair
-
-            seriesLegend = $("<div>").addClass("series").append(
-              $("<div>").addClass("color").css(backgroundColor: color, width: colorSize, height: colorSize),
-              $("<div>").addClass("label").text(label))
-
-            legend.append seriesLegend
+        $.extend plot, Grapple.RedrawablePlot, legend: legend
 
         $(root).data("plot", plot)
         plot.redrawLegend()
@@ -217,6 +212,29 @@ window.Grapple =
 
       refresh: refresh, render: render, slide: slide
 
+  RedrawablePlot:
+    redrawLegend: () ->
+      labels = @legend.find(".legendLabel").map -> $(this).text()
+      colors = @legend.find(".legendColorBox").map -> $(this).find("> div > div").css("borderColor")
+      colorSize = @legend.css "fontSize"
+
+      @legend.find("table").remove()
+      for pair in _.zip(labels, colors)
+        [label, color] = pair
+
+        seriesLegend = $("<div>").addClass("series").append(
+          $("<div>").addClass("color").css(backgroundColor: color, width: colorSize, height: colorSize),
+          $("<div>").addClass("label").text(label))
+
+        @legend.append seriesLegend
+
+    redraw: () ->
+      @resize()
+      @setupGrid()
+      @draw()
+      @redrawLegend()
+
+
 $ ->
   settings = $.get("config/grapple.json")
   viewport = $("#viewport")
@@ -230,9 +248,3 @@ $ ->
   settings.done (response) ->
     viewport.find(".loading").text("please wait")
     Grapple.begin(viewport, response)
-    Grapple.resize()
-
-  $("h1.appname").fitText(3.0)
-  viewport.find(".loading").fitText(1.0)
-
-  $(window).resize Grapple.resize
