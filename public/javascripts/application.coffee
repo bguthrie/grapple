@@ -2,7 +2,7 @@ interval = (ms, fn) -> window.setInterval fn, ms
 timeout  = (ms, fn) -> window.setTimeout fn, ms
 
 RandomData =
-  generator: () ->
+  generator: (interval) ->
     totalSeconds = 3600
     totalPoints = totalSeconds / 10
     data = []
@@ -18,11 +18,11 @@ RandomData =
         previous = if data.length > 0
           data[data.length - 1]
         else
-          [ startTime, 50 ]
+          [ startTime, 1 ]
 
         [ oldTime, oldY ] = previous
-        y = oldY + Math.random() * 10 - 5
-        time = oldTime + 10000
+        y = Math.max( 0.0, oldY + Math.random() - 0.48 )
+        time = oldTime + interval
 
         data.push [ time, y ]
 
@@ -60,7 +60,9 @@ window.Grapple =
       $s.data('plot')?.redraw()
 
   slideTo: (slideIndex, callback) ->
-    console.log "Sliding to", slideIndex
+    return if Grapple.sliding
+    Grapple.sliding = true
+
     if slideIndex >= 0
       window.history.pushState {}, "", "#" + slideIndex
       markers = $(".slidemarkers a")
@@ -69,7 +71,10 @@ window.Grapple =
 
     totalWidth = $(window).width()
     portPosition = totalWidth * -slideIndex
-    $(".slides").transition x: "#{portPosition}px", 1000, '_default', callback
+
+    $(".slides").transition x: "#{portPosition}px", 1000, '_default', () ->
+      Grapple.sliding = false
+      callback() if callback?
 
   defaults:
     graphiteHost: "localhost"
@@ -78,29 +83,37 @@ window.Grapple =
     format: "%m/%d %I%p"
     rotate: true
 
-  begin: (viewport, config) ->
-    config = $.extend {}, Grapple.defaults, config
-    viewport = $(viewport)
-    slideIndex = 0
-    slideContainer = viewport.find(".slides")
+  sliding: false
+  paused: false
 
-    slides = config.slides.map (slide) ->
-      slide = $.extend {}, { host: config.graphiteHost, refreshInterval: config.refreshInterval, format: config.format }, slide
-      Grapple.Slide.chart slide
+  indexFromUrl: (url) ->
+    parseInt url.slice(1), 10
+
+  assembleSlides: (viewport, slides) ->
+    slideContainer = viewport.find(".slides")
 
     for slide, i in slides
       $(".slidemarkers").append $("<a>").attr("href", "#" + i)
       slideContainer.append $("<div>").addClass("slide").attr("id", i)
 
     $(".slidemarkers a").click (evt) ->
-      Grapple.slideTo parseInt($(this).attr("href").slice(1), 10)
+      Grapple.slideTo Grapple.indexFromUrl($(this).attr("href"))
       evt.preventDefault()
 
     Grapple.resizeSlides()
-    containers = slideContainer.find(".slide")
 
-    currentIndex = parseInt(window.location.hash.slice(1), 10) || 0
-    console.log "index", currentIndex
+    slideContainer.find(".slide")
+
+  begin: (viewport, config) ->
+    config = $.extend {}, Grapple.defaults, config
+    viewport = $(viewport)
+
+    slides = config.slides.map (slide) ->
+      slide = $.extend {}, { host: config.graphiteHost, refreshInterval: config.refreshInterval, format: config.format }, slide
+      Grapple.Slide.chart slide
+
+    containers = Grapple.assembleSlides viewport, slides
+    currentIndex = Grapple.indexFromUrl(window.location.hash) || 0
 
     Grapple.slideTo -1, () ->
       slide = slides[currentIndex]
@@ -116,8 +129,8 @@ window.Grapple =
 
     if config.rotate
       interval config.transitionInterval, () ->
-        slideIndex = ( slideIndex + 1 ) % slides.length
-        Grapple.slideTo(slideIndex)
+        currentIndex = ( currentIndex + 1 ) % slides.length
+        Grapple.slideTo(currentIndex)
 
   Slide:
 
@@ -125,7 +138,7 @@ window.Grapple =
       spec = slide.data
 
       if spec is "random"
-        generator = RandomData.generator()
+        generator = RandomData.generator(slide.refreshInterval)
       else
         targets = (spec.target.map (t) -> "target=#{t}").join("&")
         graphiteUrl = "#{slide.host}/render?#{targets}&from=#{slide.data.from}&format=json"
