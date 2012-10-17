@@ -62,14 +62,15 @@ window.Grapple =
     Grapple.sliding = true
 
     if slideIndex >= 0
-      window.history.pushState {}, "", "#" + slideIndex
       markers = $(".slidemarkers a")
-      markers.transition opacity: 0.2, 500, '_default', () ->
-        $(markers[slideIndex]).transition opacity: 0.8, 500
+      window.history.pushState {}, "", "#" + slideIndex
+      $.when(
+        markers.transition opacity: 0.2, 500, '_default'
+      ).then(
+        $(markers[slideIndex]).transition opacity: 0.8, 500, '_default')
 
     totalWidth = $(window).width()
     portPosition = totalWidth * -slideIndex
-
     $(".slides").transition x: "#{portPosition}px", 1000, '_default', () ->
       Grapple.sliding = false
       callback() if callback?
@@ -135,7 +136,16 @@ window.Grapple =
     if config.rotate
       interval config.transitionInterval, () ->
         currentIndex = ( currentIndex + 1 ) % slides.length
-        Grapple.slideTo(currentIndex)
+        Grapple.slideTo currentIndex
+
+    $(window).on 'keyup', (evt) ->
+      unless Grapple.sliding
+        if evt.keyCode is 37
+          currentIndex = if currentIndex is 0 then slides.length - 1 else currentIndex - 1
+          Grapple.slideTo currentIndex
+        else if evt.keyCode is 39
+          currentIndex = ( currentIndex + 1 ) % slides.length
+          Grapple.slideTo currentIndex
 
   Slide:
 
