@@ -106,9 +106,16 @@ window.Grapple =
   begin: (viewport, config) ->
     config = $.extend {}, Grapple.defaults, config
     viewport = $(viewport)
+    settings = viewport.find(".settings")
 
     $("h1.appname").fitText(3.0)
     viewport.find(".loading").fitText(1.0)
+    $("header").fitText(5.0)
+
+    $("header nav a.settings").click (evt) -> settings.fadeIn() if settings.is(":hidden"); evt.preventDefault()
+    settings.find("nav a.close").click (evt) -> settings.fadeOut() unless settings.is(":hidden"); evt.preventDefault()
+    settings.click (evt) -> evt.stopPropagation(); evt.preventDefault()
+    viewport.click () -> settings.fadeOut() unless settings.is(":hidden"); evt.preventDefault()
 
     slides = config.slides.map (slide) ->
       extensions = host: config.graphiteHost, refreshInterval: config.refreshInterval, format: config.format
@@ -257,4 +264,5 @@ $ ->
 
   settings.done (response) ->
     viewport.find(".loading").text("please wait")
+    viewport.find(".settings pre").text JSON.stringify(response, null, " ")
     Grapple.begin(viewport, response)
