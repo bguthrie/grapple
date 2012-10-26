@@ -103,22 +103,73 @@ window.Grapple =
 
     slideContainer.find(".slide")
 
+  renderSettings: (viewport, config) ->
+    basicSettings = 
+      graphiteHost:       { label: "Graphite host", type: "text", default: "http://graphite.example.com" }
+      transitionInterval: { label: "Slide transition interval", type: "text", default: 20000 }
+      format:             { label: "Date/time format", type: "text", default: "%l:%M%p" }
+
+    slideSettings =
+      data:     { label: "Data Source", type: "select", default: "graphite", items: [["Graphite", "graphite"], ["Random", "random"]] }
+      title:    { label: "Slide title", type: "text", default: "" }
+      subtitle: { label: "Subtitle",    type: "text", default: "" }
+      colors:   { label: "Colors",      type: "text", default: "RGB or hex (comma-separated)" }
+      labels:   { label: "Labels",      type: "text", default: "String (comma-separated)" }
+
+    dataSettings =
+      random:
+        refreshInterval: { label: "Data refresh interval", type: "text", default: 1000 }
+
+      graphite:
+        refreshInterval: { label: "Data refresh interval", type: "text", default: 10000 }
+        from:            { label: "Duration",    type: "text", default: "Graphite duration (ex: -1week)" }
+        target:          { label: "Targets",     type: "text", default: "Graphite targets (comma-separated)" }
+
+    inputFor = (name, setting, config) ->
+      label = $("<label>").text(setting.label)
+      value = config[name] || setting.default
+      input = if setting.type is "select"
+        options = for item in setting.items
+          $("<option>").val(item[1]).text(item[0]).attr(selected: item[1] is value)
+        $("<select>").attr(name: name, disabled: true).append(options)
+      else
+        $("<input>").attr(name: name, type: setting.type, value: value, readonly: true)
+
+      $("<p>").append(label, input)
+
+    settings = viewport.find(".settings")
+    form = settings.find("form")
+
+    form.append $("<h3>").text("Settings")
+    fset = $("<fieldset>")
+    form.append fset
+    for settingName, setting of basicSettings
+      fset.append inputFor(settingName, setting, config)
+
+    form.append $("<h3>").text("Slides")
+    for slide in config.slides
+      fset = $("<fieldset>")
+      form.append fset
+      for settingName, setting of $.extend(slideSettings, dataSettings[slide.data])
+        fset.append inputFor(settingName, setting, slide)
+
+    $("header nav a.settings").click (evt) -> settings.fadeIn() if settings.is(":hidden"); evt.preventDefault()
+    settings.find("nav a.close").click (evt) -> settings.fadeOut() unless settings.is(":hidden"); evt.preventDefault()
+    settings.click (evt) -> evt.stopPropagation(); evt.preventDefault()
+    viewport.click (evt) -> settings.fadeOut() unless settings.is(":hidden"); evt.preventDefault()
+
   begin: (viewport, config) ->
     config = $.extend {}, Grapple.defaults, config
     viewport = $(viewport)
-    settings = viewport.find(".settings")
 
     $("h1.appname").fitText(3.0)
     viewport.find(".loading").fitText(1.0)
     $("header").fitText(5.0)
 
-    $("header nav a.settings").click (evt) -> settings.fadeIn() if settings.is(":hidden"); evt.preventDefault()
-    settings.find("nav a.close").click (evt) -> settings.fadeOut() unless settings.is(":hidden"); evt.preventDefault()
-    settings.click (evt) -> evt.stopPropagation(); evt.preventDefault()
-    viewport.click () -> settings.fadeOut() unless settings.is(":hidden"); evt.preventDefault()
+    Grapple.renderSettings(viewport, config)
 
     slides = config.slides.map (slide) ->
-      extensions = host: config.graphiteHost, refreshInterval: config.refreshInterval, format: config.format
+      extensions = host: config.graphiteHost, format: config.format
       slide = $.extend {}, extensions, slide
       Grapple.Slide.chart slide
 
@@ -140,7 +191,7 @@ window.Grapple =
           slide.refresh (data) ->
             slide.render $(containers[i]), data
 
-    if config.rotate
+    if config.transitionInterval? && config.transitionInterval isnt ""
       interval config.transitionInterval, () ->
         currentIndex = ( currentIndex + 1 ) % slides.length
         Grapple.slideTo currentIndex
@@ -264,5 +315,4 @@ $ ->
 
   settings.done (response) ->
     viewport.find(".loading").text("please wait")
-    viewport.find(".settings pre").text JSON.stringify(response, null, " ")
     Grapple.begin(viewport, response)

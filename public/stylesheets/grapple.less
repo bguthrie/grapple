@@ -121,7 +121,7 @@ body {
       font-weight: 300;
       opacity: 0.5;
       width: 100%;
-      a { opacity: 0.8; color: lighten(#C74242, 20%); }
+      a { opacity: 0.8; color: lighten(@error-red, 20%); }
     }
   }
 
@@ -135,20 +135,42 @@ body {
     margin-left: auto;
     margin-right: auto;
     background-color: lighten(@background, 5%);
-    border: 1px solid lighten(@background, 20%);
     border-radius: 4px;
     padding: 1%;
     display: none;
-
-    pre {
-      height: 100%;
-      overflow: scroll;
-    }
+    overflow: scroll;
 
     nav {
       position: absolute;
       top: 3%;
       right: 2%;
+    }
+
+    form {
+      fieldset {
+        margin: 1% 0 0 0;
+        border: none;
+        border-top: 1px solid lighten(@background, 30%);
+      }
+
+      p {
+        margin-top: 1%;
+        width: 100%;
+
+        label {
+          width: 30%;
+          display: inline-block;
+        }
+
+        input {
+          width: 70%;
+          border: none;
+          padding: 4px;
+          color: white;
+          background: lighten(@background, 10%);
+          &:focus { outline: none; }
+        }
+      }
     }
   }
 }
