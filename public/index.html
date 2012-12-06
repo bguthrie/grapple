@@ -32,7 +32,7 @@
       <div class="slides" data-bind="foreach: slides">
         <div class="slide" data-bind="attr: { id: $index }" style="width: 800px;">
           <div class="footer">
-            <div class="placeholder"></div>
+            <div class="placeholder" data-bind="plot: points"></div>
             <h1 class="title" data-bind="text: title"></h1>
             <h2 class="subtitle" data-bind="text: subtitle"></h2>
             <div class="legend"></div>
