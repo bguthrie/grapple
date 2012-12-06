@@ -107,8 +107,10 @@ Config = (response) ->
   this.load()
   return this
 
-ko.bindingHandlers.plot =
-  init: (elt, value, allBindings, slide, context) ->
+PlotHandler = () ->
+  this.plot = null
+
+  this.init = (elt, value, allBindings, slide, context) ->
     format = context.$root.format()
 
     plot = $.plot elt, slide.points(),
@@ -124,14 +126,18 @@ ko.bindingHandlers.plot =
       colors:
         slide.colors
 
-    $(elt).data "plot", plot
+    this.plot = plot
 
-  update: (elt, value, allBindings, slide, context) ->
-    plot = $(elt).data("plot")
+  this.update = (elt, value, allBindings, slide, context) ->
+    plot = this.plot
     plot.setData slide.points()
     plot.resize()
     plot.setupGrid()
     plot.draw()
+
+  return this
+
+ko.bindingHandlers.plot = new PlotHandler()
 
 $ ->
   # $(window).resize(Grapple.resize).trigger("resize")
