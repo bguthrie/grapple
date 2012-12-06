@@ -57,15 +57,19 @@ body {
     left: 0;
     text-align: center;
 
-    a {
-      background-color: white;
-      opacity: 0.2;
-      border-radius: 4px;
+    li {
       display: inline-block;
-      margin-left: 0.5%;
 
-      &:hover {
-        opacity: 0.5;
+      a {
+        -webkit-transition: opacity 0.1s;
+        background-color: white;
+        opacity: 0.2;
+        border-radius: 4px;
+        margin-left: 0.5%;
+        display: inline-block;
+
+        &:hover { opacity: 0.5; }
+        &.active { -webkit-transition: opacity 2s; opacity: 0.8; }
       }
     }
   }

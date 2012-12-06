@@ -14,7 +14,7 @@
     <script type="text/javascript" src="javascripts/jquery.flot.resize.js"></script>
     <script type="text/javascript" src="javascripts/jquery.transit.js"></script>
   </head>
-  <body data-bind="event: { resize: resize }">
+  <body data-bind="event: { resize: resize, keyup: rotate }">
     <header data-fit-text="5.0">
       <h1 class="appname" data-fit-text="3.0">grapple</h1>
       <nav>
@@ -23,7 +23,7 @@
     </header>
 
     <ul class="slidemarkers" data-bind="foreach: slides">
-      <li><a data-bind="attr: { href: '#' + $index() }, click: rotate"></a></li>
+      <li><a data-bind="attr: { href: '#' + $index() }, click: $parent.rotate, css: { active: active }"></a></li>
     </ul>
 
     <div id="viewport">

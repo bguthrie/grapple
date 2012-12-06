@@ -50,16 +50,11 @@ Slide = (settings) ->
 
   this.series = ko.observableArray()
   this.points = ko.observableArray()
+  this.active = ko.observable(false)
 
   for config in settings.series
     config.refreshInterval = this.refreshInterval()
     this.series.push new DataSeries(config)
-
-  this.rotate = () ->
-    console.log "shifting"
-
-  this.resize = () =>
-
 
   this.refresh = () =>
     $.when(series.refresh() for series in this.series()).then () =>
@@ -69,10 +64,31 @@ Slide = (settings) ->
 
   return this
 
-Config = (response) ->
+Config = () ->
   this.graphiteHost = ko.observable("")
   this.format = ko.observable("")
   this.slides = ko.observableArray()
+  this.currentSlideIndex = ko.observable(0)
+  this.nextIndex = ko.computed () => 
+    idx = this.currentSlideIndex()
+    len = this.slides().length
+    { next: ( idx + 1 ) % len,  prev: if idx is 0 then len - 1 else idx - 1 }
+
+  slider = ko.computed () =>
+    idx = this.currentSlideIndex()
+    if idx >= 0
+      markers = $(".slidemarkers a")
+      window.history.pushState {}, "", "#" + idx
+
+    totalWidth = $(window).width()
+    portPosition = totalWidth * -idx
+    $(".slides").transition x: "#{portPosition}px", 1000, '_default'
+
+    slide.active(false) for slide in this.slides()
+    this.slides()[idx]?.active(true)
+
+  slider.extend throttle: 200
+
 
   this.resize = () =>
     totalHeight = $(window).height()
@@ -107,8 +123,16 @@ Config = (response) ->
     for s, i in slides
       $s = $(s)
       $s.css height: curtainHeight, width: totalWidth, left: totalWidth * i
-      $s.find('.placeholder').css height: $s.height() - $s.find(".footer").height()
+      $s.find('.placeholder').css height: $s.height() - $s.find(".footer").height()  
 
+  this.rotate = (binding, evt) =>
+    idx = if evt.keyCode?
+      if evt.keyCode is 39 then this.nextIndex().next else this.nextIndex().prev
+    else
+      parseInt $(evt.target).attr("href").slice(1), 10
+
+    this.currentSlideIndex idx
+    
   this.load = () =>
     $.get("config/grapple.json").done (response) =>
       this.graphiteHost(response.graphiteHost);
@@ -119,11 +143,11 @@ Config = (response) ->
   this.load()
   return this
 
-PlotHandler = () ->
-  this.plot = null
-
-  this.init = (elt, value, allBindings, slide, context) ->
+ko.bindingHandlers.plot =
+  init: (elt, value, allBindings, slide, context) ->
     format = context.$root.format()
+
+    console.log "initting", slide.points()
 
     plot = $.plot elt, slide.points(),
       xaxis:
@@ -135,25 +159,19 @@ PlotHandler = () ->
       grid:
         color: "#777"
         borderWidth: 1
-      colors:
-        slide.colors
       legend: false
 
-    this.plot = plot
+    $(elt).data "plot", plot
     series.color(plot.getOptions().colors[i]) for series, i in slide.series()
 
     $("body").trigger "resize"
 
-  this.update = (elt, value, allBindings, slide, context) ->
-    plot = this.plot
+  update: (elt, value, allBindings, slide, context) ->
+    plot = $(elt).data "plot"
     plot.setData slide.points()
     plot.resize()
     plot.setupGrid()
     plot.draw()
-
-  return this
-
-ko.bindingHandlers.plot = new PlotHandler()
 
 $ ->
   c = new Config()
