@@ -1,32 +1,3 @@
-window.Grapple =
-  resize: () ->
-    totalHeight = $(window).height()
-    totalWidth = $(window).width()
-    headerHeight = $("header").height()
-    curtainHeight = totalHeight - headerHeight
-    slidemarkerHeight = 0.7 * headerHeight
-    chartLabelFontSize = 0.35 * headerHeight
-
-    $("#viewport").css height: curtainHeight, width: totalWidth, top: headerHeight, fontSize: chartLabelFontSize
-    $('.slidemarkers a').css width: slidemarkerHeight, height: slidemarkerHeight
-
-    Grapple.resizeSlides()
-
-  resizeSlides: () ->
-    totalHeight = $(window).height()
-    totalWidth = $(window).width()
-    headerHeight = $("header").height()
-    curtainHeight = totalHeight - headerHeight
-
-    slides = $(".slide")
-    $(".slides").css width: totalWidth * slides.length
-
-    for s, i in slides
-      $s = $(s)
-      $s.css height: curtainHeight, width: totalWidth, left: totalWidth * i
-      $s.find('.placeholder').css height: $s.height() - $s.find(".footer").height()
-      $s.data('plot')?.redraw()
-
 RandomDataGenerator = (interval) ->
   totalSeconds = 3600
   totalPoints = totalSeconds / 10
@@ -84,6 +55,12 @@ Slide = (settings) ->
     config.refreshInterval = this.refreshInterval()
     this.series.push new DataSeries(config)
 
+  this.rotate = () ->
+    console.log "shifting"
+
+  this.resize = () =>
+
+
   this.refresh = () =>
     $.when(series.refresh() for series in this.series()).then () =>
       this.points({ data: series.points(), label: series.label() } for series in this.series())
@@ -96,6 +73,41 @@ Config = (response) ->
   this.graphiteHost = ko.observable("")
   this.format = ko.observable("")
   this.slides = ko.observableArray()
+
+  this.resize = () =>
+    totalHeight = $(window).height()
+    totalWidth = $(window).width()
+    headerHeight = $("header").height()
+    curtainHeight = totalHeight - headerHeight
+    slidemarkerHeight = 0.7 * headerHeight
+    legendMarkerHeight = 0.5 * headerHeight
+    chartLabelFontSize = 0.35 * headerHeight
+
+    $("#viewport").css height: curtainHeight, width: totalWidth, top: headerHeight, fontSize: chartLabelFontSize
+    $(".slidemarkers a").css width: slidemarkerHeight, height: slidemarkerHeight
+    $(".legend .color").css width: legendMarkerHeight, height: legendMarkerHeight
+
+    this.resizeSlides()
+
+  this.resizeSlides = () =>
+    totalHeight = $(window).height()
+    totalWidth = $(window).width()
+    headerHeight = $("header").height()
+    curtainHeight = totalHeight - headerHeight
+
+    slides = $(".slide")
+    $(".slides").css width: totalWidth * slides.length
+
+    $("[data-fit-text]").each () ->
+      $this = $(this)
+      compressionFactor = parseFloat($this.attr('data-fit-text') || "1.0")
+      fontSize = $this.width() / (compressionFactor * 10)
+      $this.css(fontSize: fontSize);
+
+    for s, i in slides
+      $s = $(s)
+      $s.css height: curtainHeight, width: totalWidth, left: totalWidth * i
+      $s.find('.placeholder').css height: $s.height() - $s.find(".footer").height()
 
   this.load = () =>
     $.get("config/grapple.json").done (response) =>
@@ -125,8 +137,12 @@ PlotHandler = () ->
         borderWidth: 1
       colors:
         slide.colors
+      legend: false
 
     this.plot = plot
+    series.color(plot.getOptions().colors[i]) for series, i in slide.series()
+
+    $("body").trigger "resize"
 
   this.update = (elt, value, allBindings, slide, context) ->
     plot = this.plot
@@ -140,6 +156,6 @@ PlotHandler = () ->
 ko.bindingHandlers.plot = new PlotHandler()
 
 $ ->
-  # $(window).resize(Grapple.resize).trigger("resize")
   c = new Config()
   ko.applyBindings c
+  $("body").trigger("resize")

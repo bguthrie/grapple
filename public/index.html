@@ -14,28 +14,38 @@
     <script type="text/javascript" src="javascripts/jquery.flot.resize.js"></script>
     <script type="text/javascript" src="javascripts/jquery.transit.js"></script>
   </head>
-  <body>
-    <header>
-      <h1 class="appname">grapple</h1>
+  <body data-bind="event: { resize: resize }">
+    <header data-fit-text="5.0">
+      <h1 class="appname" data-fit-text="3.0">grapple</h1>
       <nav>
         <a href="#settings" class="settings"><i class="icon-cog icon-large"></i></a>
       </nav>
     </header>
-    <ul class="slidemarkers"></ul>
+
+    <ul class="slidemarkers" data-bind="foreach: slides">
+      <li><a data-bind="attr: { href: '#' + $index() }, click: rotate"></a></li>
+    </ul>
+
     <div id="viewport">
-      <h1 class="loading"></h1>
-      <h3 class="more"></h3>
+      <!-- <h1 class="loading" data-fit-text="1.0"></h1> -->
+      <!-- <h3 class="more" data-fit-text=""></h3> -->
       <div class="settings">
         <nav><a href="#close" class="close"><i class="icon-remove"></i></a></nav>
         <form action="/settings.json" method="post"></form>
       </div>
+
       <div class="slides" data-bind="foreach: slides">
         <div class="slide" data-bind="attr: { id: $index }" style="width: 800px;">
+          <div class="placeholder" data-bind="plot: points"></div>
           <div class="footer">
-            <div class="placeholder" data-bind="plot: points"></div>
-            <h1 class="title" data-bind="text: title"></h1>
-            <h2 class="subtitle" data-bind="text: subtitle"></h2>
-            <div class="legend"></div>
+            <ul class="legend" data-fit-text="4.5" data-bind="foreach: series">
+              <li class="series">
+                <span class="color" data-bind="style: { backgroundColor: color }"></span>
+                <span class="text" data-bind="text: label"></span>
+              </li>
+            </ul>
+            <h1 class="title" data-fit-text="2.0" data-bind="text: title"></h1>
+            <h2 class="subtitle" data-fit-text="4.0" data-bind="text: subtitle"></h2>
           </div>
         </div>
       </div>
