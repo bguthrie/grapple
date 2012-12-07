@@ -108,22 +108,11 @@ Config = () ->
     $(".slidemarkers a").css width: slidemarkerHeight, height: slidemarkerHeight
     $(".legend .color").css width: legendMarkerHeight, height: legendMarkerHeight
 
-    this.resizeSlides()
-
-  this.resizeSlides = () =>
-    totalHeight = $(window).height()
-    totalWidth = $(window).width()
-    headerHeight = $("header").height()
-    curtainHeight = totalHeight - headerHeight
+    rootFontSize = totalWidth / 14.0 # Magic numbers are magic.
+    $("body").css fontSize: "#{rootFontSize}%"
 
     slides = $(".slide")
     $(".slides").css width: totalWidth * slides.length
-
-    $("[data-fit-text]").each () ->
-      $this = $(this)
-      compressionFactor = parseFloat($this.attr('data-fit-text') || "1.0")
-      fontSize = $this.width() / (compressionFactor * 10)
-      $this.css(fontSize: fontSize);
 
     for s, i in slides
       $s = $(s)
@@ -132,11 +121,15 @@ Config = () ->
 
   this.rotate = (binding, evt) =>
     idx = if evt.keyCode?
-      if evt.keyCode is 39 then this.nextIndex().next else this.nextIndex().prev
+      switch evt.keyCode
+        when 39, 32, 9 # Right arrow, space, tab
+          this.nextIndex().next
+        when 37 # Left arrow
+          this.nextIndex().prev
     else
       parseInt $(evt.target).attr("href").slice(1), 10
 
-    this.currentSlideIndex idx
+    this.currentSlideIndex idx if idx?
     
   this.load = () =>
     $.get("config/grapple.json").done (response) =>

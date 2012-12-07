@@ -8,15 +8,14 @@
     <script type="text/javascript" src="javascripts/jquery-1.8.1.min.js"></script>
     <script type="text/javascript" src="javascripts/underscore-1.4.2.min.js"></script>
     <script type="text/javascript" src="javascripts/knockout-2.2.0.js"></script>
-    <script type="text/javascript" src="javascripts/jquery.fittext.js"></script>
     <script type="text/javascript" src="javascripts/jquery.flot.js"></script>
     <script type="text/javascript" src="javascripts/jquery.flot.time.js"></script>
     <script type="text/javascript" src="javascripts/jquery.flot.resize.js"></script>
     <script type="text/javascript" src="javascripts/jquery.transit.js"></script>
   </head>
   <body data-bind="event: { resize: resize, keyup: rotate }">
-    <header data-fit-text="5.0">
-      <h1 class="appname" data-fit-text="3.0">grapple</h1>
+    <header>
+      <h1 class="appname">grapple</h1>
       <nav>
         <a href="#settings" class="settings"><i class="icon-cog icon-large"></i></a>
       </nav>
@@ -27,8 +26,8 @@
     </ul>
 
     <div id="viewport">
-      <!-- <h1 class="loading" data-fit-text="1.0"></h1> -->
-      <!-- <h3 class="more" data-fit-text=""></h3> -->
+      <!-- <h1 class="loading"></h1> -->
+      <!-- <h3 class="more"></h3> -->
       <div class="settings">
         <nav><a href="#close" class="close"><i class="icon-remove"></i></a></nav>
         <form action="/settings.json" method="post"></form>
@@ -38,15 +37,15 @@
         <div class="slide" data-bind="attr: { id: $index }" style="width: 800px;">
           <div class="placeholder" data-bind="plot: points"></div>
           <div class="footer">
-            <ul class="legend" data-fit-text="4.5" data-bind="foreach: series">
+            <ul class="legend" data-bind="foreach: series">
               <li class="series">
                 <span class="color" data-bind="style: { backgroundColor: color }"></span>
                 <span class="label" data-bind="text: label"></span>
                 <span class="value" data-bind="text: lastValue"></span>
               </li>
             </ul>
-            <h1 class="title" data-fit-text="2.0" data-bind="text: title"></h1>
-            <h2 class="subtitle" data-fit-text="4.0" data-bind="text: subtitle"></h2>
+            <h1 class="title" data-bind="text: title"></h1>
+            <h2 class="subtitle" data-bind="text: subtitle"></h2>
           </div>
         </div>
       </div>
