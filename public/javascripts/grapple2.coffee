@@ -1,4 +1,4 @@
-RandomDataGenerator = (interval) ->
+RandomDataSource = (interval) ->
   totalSeconds = 3600
   totalPoints = totalSeconds / 10
   data = []
@@ -27,32 +27,55 @@ RandomDataGenerator = (interval) ->
 
   return this
 
+GraphiteDataSource = (host, source, from) ->
+  graphiteUrl = "#{host}/render?target=#{source}&from=#{from}&format=json"
+
+  this.refresh = () =>
+    $.Deferred (def) =>
+      console.log graphiteUrl
+      request = $.ajax(graphiteUrl, method: "get", dataType: "jsonp", jsonp: "jsonp")
+
+      request.error (response) ->
+        console.log(response)
+        def.resolve []
+
+      request.done (response) ->
+        target = response[0]
+        datapoints = target.datapoints.map (p) -> [ p[1] * 1000, p[0] ]
+        def.resolve datapoints
+
+  return this
+
 DataSeries = (slide, settings) ->
-  this[setting] = ko.observable(settings[setting]) for setting in ["color", "label", "source"]
-  this.refreshInterval = if settings.refreshInterval then ko.observable(refreshInterval) else slide.refreshInterval
+  this[setting] = ko.observable(settings[setting]) for setting in ["color", "label", "source", "from"]
+  this.from = ko.observable(settings.from || "-1week")
   this.points = ko.observable([])
 
   this.lastValue = ko.computed () =>
     point = this.points()[ this.points().length - 1 ]
     if point?
-      point[1].toFixed(2)
+      parseFloat(point[1]).toFixed(2)
     else 0
 
-  if settings.source is "random"
-    this.generator = new RandomDataGenerator(this.refreshInterval())
+  this.generator = ko.computed () =>
+    if this.source() is "random"
+      new RandomDataSource(slide.refreshInterval())
+    else
+      new GraphiteDataSource(slide.graphiteHost(), this.source(), this.from())
 
   this.refresh = () =>
     $.Deferred (def) =>
-      this.generator.refresh().done (points) =>
+      this.generator().refresh().done (points) =>
         this.points(points)
         def.resolve(points)
 
   return this
 
-Slide = (settings) ->
+Slide = (config, settings) ->
   this[setting] = ko.observable(settings[setting]) for setting in ["title", "subtitle", "refreshInterval"]
   this.points = ko.observableArray()
   this.active = ko.observable(false)
+  this.graphiteHost = config.graphiteHost
   this.series = ko.observableArray(new DataSeries(this, config) for config in settings.series)
 
   this.refresh = () =>
@@ -64,10 +87,11 @@ Slide = (settings) ->
   return this
 
 Config = () ->
-  this.graphiteHost = ko.observable("")
-  this.format = ko.observable("")
+  this.graphiteHost = ko.observable()
+  this.format = ko.observable()
   this.slides = ko.observableArray()
   this.currentSlideIndex = ko.observable(0)
+
   this.nextIndex = ko.computed () => 
     idx = this.currentSlideIndex()
     len = this.slides().length
@@ -126,10 +150,10 @@ Config = () ->
     
   this.load = () =>
     $.get("config/grapple.json").done (response) =>
-      this.graphiteHost(response.graphiteHost);
+      this.graphiteHost(response.graphiteHost)
       this.format(response.format)
       _(response.slides).each (settings) =>
-        this.slides.push new Slide(settings)
+        this.slides.push new Slide(this, settings)
 
   this.load()
   return this
