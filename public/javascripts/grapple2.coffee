@@ -33,6 +33,12 @@ DataSeries = (settings) ->
 
   this.points = ko.observable([])
 
+  this.lastValue = ko.computed () =>
+    point = this.points()[ this.points().length - 1 ]
+    if point?
+      point[1].toFixed(2)
+    else 0
+
   if settings.source is "random"
     this.generator = new RandomDataGenerator(this.refreshInterval())
 
@@ -88,7 +94,6 @@ Config = () ->
     this.slides()[idx]?.active(true)
 
   slider.extend throttle: 200
-
 
   this.resize = () =>
     totalHeight = $(window).height()
@@ -147,18 +152,18 @@ ko.bindingHandlers.plot =
   init: (elt, value, allBindings, slide, context) ->
     format = context.$root.format()
 
-    console.log "initting", slide.points()
-
     plot = $.plot elt, slide.points(),
       xaxis:
         mode: "time", 
         timeformat: format
         color: "white"
+        tickLength: 0
       yaxis:
         color: "white"
+        tickLength: 0
       grid:
         color: "#777"
-        borderWidth: 1
+        borderWidth: 0
       legend: false
 
     $(elt).data "plot", plot

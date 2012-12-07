@@ -41,7 +41,8 @@
             <ul class="legend" data-fit-text="4.5" data-bind="foreach: series">
               <li class="series">
                 <span class="color" data-bind="style: { backgroundColor: color }"></span>
-                <span class="text" data-bind="text: label"></span>
+                <span class="label" data-bind="text: label"></span>
+                <span class="value" data-bind="text: lastValue"></span>
               </li>
             </ul>
             <h1 class="title" data-fit-text="2.0" data-bind="text: title"></h1>
