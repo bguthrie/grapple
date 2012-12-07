@@ -1,0 +1,36 @@
+{
+  "graphiteHost": "http://graphite.watchdog.net",
+  "format": "%l:%M%p",
+
+  "slides": [ {
+    "title": "Combined CPU Usage",
+    "subtitle": "Previous five minutes",
+    "refreshInterval": 1000,
+    "series": [ {
+      "color": "#DE3E12",
+      "label": "CPU 1",
+      "source": "random"
+    }, {
+      "color": "#B83612",
+      "label": "CPU 2",
+      "source": "random"
+    }, {
+      "color": "#2376CF",
+      "label": "CPU 3",
+      "source": "random"
+    }, {
+      "color": "#1B4E85",
+      "label": "CPU 4",
+      "source": "random"
+    } ]
+  }, {
+    "title": "Total Sprockets",
+    "subtitle": "Past hour",
+    "refreshInterval": 1000,
+    "series": [ {
+      "color": "#98a3cb",
+      "label": "Sprocket count",
+      "source": "random"
+    } ]
+  } ]
+}

@@ -27,10 +27,9 @@ RandomDataGenerator = (interval) ->
 
   return this
 
-DataSeries = (settings) ->
-  for name, setting of settings
-    this[name] = ko.observable(setting)
-
+DataSeries = (slide, settings) ->
+  this[setting] = ko.observable(settings[setting]) for setting in ["color", "label", "source"]
+  this.refreshInterval = if settings.refreshInterval then ko.observable(refreshInterval) else slide.refreshInterval
   this.points = ko.observable([])
 
   this.lastValue = ko.computed () =>
@@ -51,16 +50,10 @@ DataSeries = (settings) ->
   return this
 
 Slide = (settings) ->
-  for name, setting of settings
-    this[name] = ko.observable(setting)
-
-  this.series = ko.observableArray()
+  this[setting] = ko.observable(settings[setting]) for setting in ["title", "subtitle", "refreshInterval"]
   this.points = ko.observableArray()
   this.active = ko.observable(false)
-
-  for config in settings.series
-    config.refreshInterval = this.refreshInterval()
-    this.series.push new DataSeries(config)
+  this.series = ko.observableArray(new DataSeries(this, config) for config in settings.series)
 
   this.refresh = () =>
     $.when(series.refresh() for series in this.series()).then () =>
@@ -158,6 +151,7 @@ ko.bindingHandlers.plot =
         color: "#777"
         borderWidth: 0
       legend: false
+      colors: ( s.color() for s in slide.series() )
 
     $(elt).data "plot", plot
     series.color(plot.getOptions().colors[i]) for series, i in slide.series()
