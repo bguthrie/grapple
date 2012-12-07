@@ -54,7 +54,7 @@ DataSeries = (slide, settings) ->
   this.lastValue = ko.computed () =>
     point = this.points()[ this.points().length - 1 ]
     if point?
-      parseFloat(point[1]).toFixed(2)
+      parseFloat(point[1]).toFixed(1)
     else 0
 
   this.generator = ko.computed () =>
@@ -121,7 +121,7 @@ Config = () ->
     legendMarkerHeight = 0.5 * headerHeight
     chartLabelFontSize = 0.35 * headerHeight
 
-    $("#viewport").css height: curtainHeight, width: totalWidth, top: headerHeight, fontSize: chartLabelFontSize
+    $(".viewport").css height: curtainHeight, width: totalWidth, top: headerHeight, fontSize: chartLabelFontSize
     $(".slidemarkers a").css width: slidemarkerHeight, height: slidemarkerHeight
     $(".legend .color").css width: legendMarkerHeight, height: legendMarkerHeight
 
@@ -147,6 +147,10 @@ Config = () ->
       parseInt $(evt.target).attr("href").slice(1), 10
 
     this.currentSlideIndex idx if idx?
+
+  this.fullscreen = (binding, evt) =>
+    $("body")[0].webkitRequestFullscreen()
+    $("body").trigger 
     
   this.load = () =>
     $.get("config/grapple.json").done (response) =>
