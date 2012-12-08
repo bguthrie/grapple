@@ -13,7 +13,7 @@
     <script type="text/javascript" src="javascripts/jquery.flot.resize.js"></script>
     <script type="text/javascript" src="javascripts/jquery.transit.js"></script>
   </head>
-  <body data-bind="event: { resize: resize, keyup: rotate }, style: { fontSize: rootFontSize() + '%' }">
+  <body data-bind="event: { resize: resize, keyup: rotate }">
     <header>
       <h1 class="appname">grapple</h1>
       <nav>
@@ -23,10 +23,10 @@
     </header>
 
     <ul class="slidemarkers" data-bind="foreach: slides">
-      <li><a data-bind="attr: { href: '#' + $index() }, click: $parent.rotate, css: { active: active }, style: { width: markerSize, height: markerSize }"></a></li>
+      <li><a data-bind="attr: { href: '#' + $index() }, click: $parent.rotate, css: { active: active }"></a></li>
     </ul>
 
-    <div class="viewport" data-bind="style: { height: curtainHeight, width: width, top: headerHeight, fontSize: chartLabelFontSize }">
+    <div class="viewport">
       <div class="settings">
         <nav><a href="#close" class="close"><i class="icon-remove"></i></a></nav>
         <form action="/settings.json" method="post"></form>
@@ -35,13 +35,13 @@
       <!-- <h1 class="loading"></h1> -->
       <!-- <h3 class="more"></h3> -->
 
-      <div class="slides" data-bind="foreach: slides, style: { width: slideContainerWidth }">
-        <div class="slide" data-bind="attr: { id: $index }, style: { width: width, height: height }" style="width: 800px;">
-          <div class="placeholder" data-bind="plot: points, style: { height: chartHeight }"></div>
+      <div class="slides" data-bind="foreach: slides">
+        <div class="slide" data-bind="attr: { id: $index }" style="width: 800px;">
+          <div class="placeholder" data-bind="plot: points"></div>
           <div class="footer">
             <ul class="legend" data-bind="foreach: series">
               <li class="series">
-                <span class="color" data-bind="style: { backgroundColor: color, width: size, height: size }"></span>
+                <span class="color" data-bind="style: { backgroundColor: color }"></span>
                 <span class="label" data-bind="text: label"></span>
                 <span class="value" data-bind="text: lastValue"></span>
               </li>

@@ -50,7 +50,6 @@ DataSeries = (slide, settings) ->
   this[setting] = ko.observable(settings[setting]) for setting in ["color", "label", "source", "from"]
   this.from = ko.observable(settings.from || "-1week")
   this.points = ko.observable([])
-  this.markerSize = ko.computed () => 0.5 * slide.height()
 
   this.lastValue = ko.computed () =>
     point = this.points()[ this.points().length - 1 ]
@@ -77,12 +76,6 @@ Slide = (config, settings) ->
   this.points = ko.observableArray()
   this.active = ko.observable(false)
   this.graphiteHost = config.graphiteHost
-
-  this.markerSize = ko.computed () => 0.7 * config.headerHeight()
-  this.height = config.curtainHeight
-  this.width = config.width
-  this.chartHeight = ko.computed () => this.height() - $(".slide .footer").height()
-
   this.series = ko.observableArray(new DataSeries(this, config) for config in settings.series)
 
   this.refresh = () =>
@@ -110,7 +103,8 @@ Config = () ->
       markers = $(".slidemarkers a")
       window.history.pushState {}, "", "#" + idx
 
-    portPosition = this.width() * -idx
+    totalWidth = $(window).width()
+    portPosition = totalWidth * -idx
     $(".slides").transition x: "#{portPosition}px", 1000, '_default'
 
     slide.active(false) for slide in this.slides()
@@ -118,34 +112,29 @@ Config = () ->
 
   slider.extend throttle: 200
 
-  this.slideCount = ko.computed () => this.slides().length
-
-  this.height = ko.observable()
-  this.width = ko.observable()
-  this.headerHeight = ko.observable()
-  this.curtainHeight = ko.computed () => this.height() - this.headerHeight()
-  this.chartLabelFontSize = ko.computed () => 0.35 * this.headerHeight()
-  this.rootFontSize = ko.computed () => this.width() / 14.0 # Magic numbers are magic.
-  this.slideContainerWidth = ko.computed () => this.width() * this.slideCount()
-
   this.resize = () =>
-    this.height $(window).height()
-    this.width $(window).width()
-    this.headerHeight $("header").height()
+    totalHeight = $(window).height()
+    totalWidth = $(window).width()
+    headerHeight = $("header").height()
+    curtainHeight = totalHeight - headerHeight
+    slidemarkerHeight = 0.7 * headerHeight
+    legendMarkerHeight = 0.5 * headerHeight
+    chartLabelFontSize = 0.35 * headerHeight
 
-    # $(".slidemarkers a").css width: slidemarkerHeight, height: slidemarkerHeight
-    # $(".legend .color").css width: legendMarkerHeight, height: legendMarkerHeight
+    $(".viewport").css height: curtainHeight, width: totalWidth, top: headerHeight, fontSize: chartLabelFontSize
+    $(".slidemarkers a").css width: slidemarkerHeight, height: slidemarkerHeight
+    $(".legend .color").css width: legendMarkerHeight, height: legendMarkerHeight
 
-    # rootFontSize = totalWidth / 14.0 # Magic numbers are magic.
-    # $("body").css fontSize: "#{rootFontSize}%"
+    rootFontSize = totalWidth / 14.0 # Magic numbers are magic.
+    $("body").css fontSize: "#{rootFontSize}%"
 
-    # slides = $(".slide")
-    # $(".slides").css width: totalWidth * slides.length
+    slides = $(".slide")
+    $(".slides").css width: totalWidth * slides.length
 
-    # for s, i in slides
-    #   $s = $(s)
-    #   $s.css height: curtainHeight, width: totalWidth, left: totalWidth * i
-    #   $s.find('.placeholder').css height: $s.height() - $s.find(".footer").height()
+    for s, i in slides
+      $s = $(s)
+      $s.css height: curtainHeight, width: totalWidth, left: totalWidth * i
+      $s.find('.placeholder').css height: $s.height() - $s.find(".footer").height()  
 
   this.rotate = (binding, evt) =>
     idx = if evt.keyCode?
