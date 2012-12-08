@@ -57,11 +57,14 @@ DataSeries = (slide, settings) ->
       parseFloat(point[1]).toFixed(1)
     else 0
 
+  this.size = ko.computed () =>
+    0.5 * slide.config.headerHeight()
+
   this.generator = ko.computed () =>
     if this.source() is "random"
       new RandomDataSource(slide.refreshInterval())
     else
-      new GraphiteDataSource(slide.graphiteHost(), this.source(), this.from())
+      new GraphiteDataSource(slide.config.graphiteHost(), this.source(), this.from())
 
   this.refresh = () =>
     $.Deferred (def) =>
@@ -73,10 +76,19 @@ DataSeries = (slide, settings) ->
 
 Slide = (config, settings) ->
   this[setting] = ko.observable(settings[setting]) for setting in ["title", "subtitle", "refreshInterval"]
+  this.config = config
   this.points = ko.observableArray()
   this.active = ko.observable(false)
-  this.graphiteHost = config.graphiteHost
   this.series = ko.observableArray(new DataSeries(this, config) for config in settings.series)
+
+  this.markerSize = ko.computed () =>
+    0.7 * this.config.headerHeight()
+
+  this.height = this.config.curtainHeight
+  this.width  = this.config.width
+
+  this.chartHeight = ko.computed () =>
+    this.height() - this.config.footerHeight()
 
   this.refresh = () =>
     $.when(series.refresh() for series in this.series()).then () =>
@@ -86,25 +98,38 @@ Slide = (config, settings) ->
 
   return this
 
-Config = () ->
+Root = () ->
   this.graphiteHost = ko.observable()
   this.format = ko.observable()
   this.slides = ko.observableArray()
+  this.slideCount = ko.computed () => this.slides().length
   this.currentSlideIndex = ko.observable(0)
+
+  this.height       = ko.observable()
+  this.width        = ko.observable()
+  this.headerHeight = ko.observable()
+  this.footerHeight = ko.observable()
 
   this.nextIndex = ko.computed () => 
     idx = this.currentSlideIndex()
     len = this.slides().length
     { next: ( idx + 1 ) % len,  prev: if idx is 0 then len - 1 else idx - 1 }
 
+  this.curtainHeight = ko.computed () =>
+    this.height() - this.headerHeight()
+
+  this.rootFontSize = ko.computed () =>
+    this.width() / 14.0 # Magic numbers are magic.
+
+  this.slideContainerWidth = ko.computed () =>
+    this.width() * this.slideCount()
+
   slider = ko.computed () =>
     idx = this.currentSlideIndex()
     if idx >= 0
-      markers = $(".slidemarkers a")
       window.history.pushState {}, "", "#" + idx
 
-    totalWidth = $(window).width()
-    portPosition = totalWidth * -idx
+    portPosition = this.width() * -idx
     $(".slides").transition x: "#{portPosition}px", 1000, '_default'
 
     slide.active(false) for slide in this.slides()
@@ -113,28 +138,10 @@ Config = () ->
   slider.extend throttle: 200
 
   this.resize = () =>
-    totalHeight = $(window).height()
-    totalWidth = $(window).width()
-    headerHeight = $("header").height()
-    curtainHeight = totalHeight - headerHeight
-    slidemarkerHeight = 0.7 * headerHeight
-    legendMarkerHeight = 0.5 * headerHeight
-    chartLabelFontSize = 0.35 * headerHeight
-
-    $(".viewport").css height: curtainHeight, width: totalWidth, top: headerHeight, fontSize: chartLabelFontSize
-    $(".slidemarkers a").css width: slidemarkerHeight, height: slidemarkerHeight
-    $(".legend .color").css width: legendMarkerHeight, height: legendMarkerHeight
-
-    rootFontSize = totalWidth / 14.0 # Magic numbers are magic.
-    $("body").css fontSize: "#{rootFontSize}%"
-
-    slides = $(".slide")
-    $(".slides").css width: totalWidth * slides.length
-
-    for s, i in slides
-      $s = $(s)
-      $s.css height: curtainHeight, width: totalWidth, left: totalWidth * i
-      $s.find('.placeholder').css height: $s.height() - $s.find(".footer").height()  
+    this.height       $(window).height()
+    this.width        $(window).width()
+    this.headerHeight $("header").height()
+    this.footerHeight $(".footer").height()
 
   this.rotate = (binding, evt) =>
     idx = if evt.keyCode?
@@ -194,6 +201,5 @@ ko.bindingHandlers.plot =
     plot.draw()
 
 $ ->
-  c = new Config()
-  ko.applyBindings c
+  ko.applyBindings new Root()
   $("body").trigger("resize")
