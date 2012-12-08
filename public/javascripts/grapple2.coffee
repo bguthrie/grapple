@@ -103,6 +103,7 @@ Root = () ->
   @format            = ko.observable()
   @slides            = ko.observableArray()
   @currentSlideIndex = ko.observable(0)
+  @settingsVisible   = ko.observable(false)
 
   @height            = ko.observable()
   @width             = ko.observable()
@@ -145,20 +146,23 @@ Root = () ->
     @footerHeight $(".footer").height()
 
   @rotate = (binding, evt) =>
-    idx = if evt.keyCode?
+    idx = if evt.keyCode? and $(":focus").length is 0
       switch evt.keyCode
         when 39, 32, 9 # Right arrow, space, tab
           @nextIndex().next
         when 37 # Left arrow
           @nextIndex().prev
-    else
-      parseInt $(evt.target).attr("href").slice(1), 10
+    else if target = $(evt.target).attr("href")
+      parseInt target.slice(1), 10
 
     @currentSlideIndex idx if idx?
 
   @fullscreen = (binding, evt) =>
     $("body")[0].webkitRequestFullscreen()
-    $("body").trigger 
+
+  @showSettings = (binding, evt) =>
+    @settingsVisible !@settingsVisible()
+
     
   @load = () =>
     $.get("config/grapple.json").done (response) =>
@@ -192,11 +196,13 @@ ko.bindingHandlers.plot =
 
     $(elt).data "plot", plot
     series.color(plot.getOptions().colors[i]) for series, i in slide.series()
+    console.log plot.getOptions(0)
 
     $("body").trigger "resize"
 
   update: (elt, value, allBindings, slide, context) ->
     plot = $(elt).data "plot"
+    plot.getOptions().colors = (series.color() for series in slide.series())
     plot.setData slide.points()
     plot.resize()
     plot.setupGrid()

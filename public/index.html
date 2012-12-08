@@ -8,6 +8,7 @@
     <script type="text/javascript" src="javascripts/jquery-1.8.1.min.js"></script>
     <script type="text/javascript" src="javascripts/underscore-1.4.2.min.js"></script>
     <script type="text/javascript" src="javascripts/knockout-2.2.0.js"></script>
+    <script type="text/javascript" src="javascripts/sammy-0.7.2.min.js"></script>
     <script type="text/javascript" src="javascripts/jquery.flot.js"></script>
     <script type="text/javascript" src="javascripts/jquery.flot.time.js"></script>
     <script type="text/javascript" src="javascripts/jquery.flot.resize.js"></script>
@@ -18,8 +19,8 @@
     <header>
       <h1 class="appname">grapple</h1>
       <nav>
-        <a href="#settings" class="settings"><i class="icon-list-ul icon-large"></i></a>
         <a href="#fullscreen" class="settings" data-bind="click: fullscreen"><i class="icon-fullscreen icon-large"></i></a>
+        <a href="#settings" class="settings" data-bind="click: showSettings, css: { active: settingsVisible }"><i class="icon-list-ul icon-large"></i></a>
       </nav>
     </header>
 
@@ -30,9 +31,29 @@
     </ul>
 
     <div class="viewport" data-bind="style: { height: curtainHeight, width: width, top: headerHeight }">
-      <div class="settings">
-        <nav><a href="#close" class="close"><i class="icon-remove"></i></a></nav>
-        <form action="/settings.json" method="post"></form>
+      <div class="settings" data-bind="visible: settingsVisible">
+        <form action="/settings" method="post" accept-charset="utf-8">
+          <fieldset>
+            <legend>Settings</legend>
+           
+            <label>Graphite host <input type="text" name="graphiteHost" data-bind="value: graphiteHost" id="graphiteHost"></input></label>
+
+            <ul class="slide-settings" data-bind="foreach: slides">
+              <li>
+                <label>Title <input type="text" name="title" data-bind="value: title"></input></label>
+                <label>Subtitle <input type="text" name="subtitle" data-bind="value: subtitle"></input></label>
+                <label>Update frequency <input type="text" name="refreshInterval" data-bind="value: refreshInterval"></input></label>
+
+                <ul class="data-series-settings" data-bind="foreach: series">
+                  <li>
+                    <label>Label <input type="text" name="label" data-bind="value: label"></input></label>
+                    <input type="color" name="color" data-bind="value: color"></input>
+                  </li>
+                </ul>
+              </li>
+            </ul>
+          </fieldset>
+        </form>
       </div>
 
       <!-- <h1 class="loading"></h1> -->
