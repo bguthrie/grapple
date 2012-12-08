@@ -6,7 +6,7 @@ RandomDataSource = (interval) ->
   now = Math.floor( date.getTime() / 1000 )
   startTime = now - totalSeconds
 
-  this.refresh = () ->
+  @refresh = () ->
     if data.length > 0
       data = data.slice 1
 
@@ -23,14 +23,14 @@ RandomDataSource = (interval) ->
       data.push [ time, y ]
 
     $.Deferred () ->
-      this.resolve data
+      @resolve data
 
   return this
 
 GraphiteDataSource = (host, source, from) ->
   graphiteUrl = "#{host}/render?target=#{source}&from=#{from}&format=json"
 
-  this.refresh = () =>
+  @refresh = () =>
     $.Deferred (def) =>
       console.log graphiteUrl
       request = $.ajax(graphiteUrl, method: "get", dataType: "jsonp", jsonp: "jsonp")
@@ -48,125 +48,127 @@ GraphiteDataSource = (host, source, from) ->
 
 DataSeries = (slide, settings) ->
   this[setting] = ko.observable(settings[setting]) for setting in ["color", "label", "source", "from"]
-  this.from = ko.observable(settings.from || "-1week")
-  this.points = ko.observable([])
+  @from = ko.observable(settings.from || "-1week")
+  @points = ko.observable([])
 
-  this.lastValue = ko.computed () =>
-    point = this.points()[ this.points().length - 1 ]
+  @lastValue = ko.computed () =>
+    point = @points()[ @points().length - 1 ]
     if point?
       parseFloat(point[1]).toFixed(1)
     else 0
 
-  this.size = ko.computed () =>
+  @size = ko.computed () =>
     0.5 * slide.config.headerHeight()
 
-  this.generator = ko.computed () =>
-    if this.source() is "random"
+  @generator = ko.computed () =>
+    if @source() is "random"
       new RandomDataSource(slide.refreshInterval())
     else
-      new GraphiteDataSource(slide.config.graphiteHost(), this.source(), this.from())
+      new GraphiteDataSource(slide.config.graphiteHost(), @source(), @from())
 
-  this.refresh = () =>
+  @refresh = () =>
     $.Deferred (def) =>
-      this.generator().refresh().done (points) =>
-        this.points(points)
+      @generator().refresh().done (points) =>
+        @points(points)
         def.resolve(points)
 
   return this
 
 Slide = (config, settings) ->
   this[setting] = ko.observable(settings[setting]) for setting in ["title", "subtitle", "refreshInterval"]
-  this.config = config
-  this.points = ko.observableArray()
-  this.active = ko.observable(false)
-  this.series = ko.observableArray(new DataSeries(this, config) for config in settings.series)
+  @config = config
+  @points = ko.observableArray()
+  @active = ko.observable(false)
+  @series = ko.observableArray(new DataSeries(this, config) for config in settings.series)
 
-  this.markerSize = ko.computed () =>
-    0.7 * this.config.headerHeight()
+  @markerSize = ko.computed () =>
+    0.7 * @config.headerHeight()
 
-  this.height = this.config.curtainHeight
-  this.width  = this.config.width
+  @height = @config.curtainHeight
+  @width  = @config.width
 
-  this.chartHeight = ko.computed () =>
-    this.height() - this.config.footerHeight()
+  @chartHeight = ko.computed () =>
+    @height() - @config.footerHeight()
 
-  this.refresh = () =>
-    $.when(series.refresh() for series in this.series()).then () =>
-      this.points({ data: series.points(), label: series.label() } for series in this.series())
+  @refresh = () =>
+    $.when(series.refresh() for series in @series()).then () =>
+      @points({ data: series.points(), label: series.label() } for series in @series())
 
-  window.setInterval this.refresh, this.refreshInterval()
+  window.setInterval @refresh, @refreshInterval()
 
   return this
 
 Root = () ->
-  this.graphiteHost = ko.observable()
-  this.format = ko.observable()
-  this.slides = ko.observableArray()
-  this.slideCount = ko.computed () => this.slides().length
-  this.currentSlideIndex = ko.observable(0)
+  @graphiteHost      = ko.observable()
+  @format            = ko.observable()
+  @slides            = ko.observableArray()
+  @currentSlideIndex = ko.observable(0)
 
-  this.height       = ko.observable()
-  this.width        = ko.observable()
-  this.headerHeight = ko.observable()
-  this.footerHeight = ko.observable()
+  @height            = ko.observable()
+  @width             = ko.observable()
+  @headerHeight      = ko.observable()
+  @footerHeight      = ko.observable()
 
-  this.nextIndex = ko.computed () => 
-    idx = this.currentSlideIndex()
-    len = this.slides().length
+  @slideCount = ko.computed () => 
+    @slides().length
+
+  @nextIndex = ko.computed () => 
+    idx = @currentSlideIndex()
+    len = @slides().length
     { next: ( idx + 1 ) % len,  prev: if idx is 0 then len - 1 else idx - 1 }
 
-  this.curtainHeight = ko.computed () =>
-    this.height() - this.headerHeight()
+  @curtainHeight = ko.computed () =>
+    @height() - @headerHeight()
 
-  this.rootFontSize = ko.computed () =>
-    this.width() / 14.0 # Magic numbers are magic.
+  @rootFontSize = ko.computed () =>
+    @width() / 14.0 # Magic numbers are magic.
 
-  this.slideContainerWidth = ko.computed () =>
-    this.width() * this.slideCount()
+  @slideContainerWidth = ko.computed () =>
+    @width() * @slideCount()
 
   slider = ko.computed () =>
-    idx = this.currentSlideIndex()
-    if idx >= 0
-      window.history.pushState {}, "", "#" + idx
+    idx = @currentSlideIndex()
+    if idx >= 0 then window.history.pushState {}, "", "#" + idx
 
-    portPosition = this.width() * -idx
-    $(".slides").transition x: "#{portPosition}px", 1000, '_default'
+    portPosition = @width() * -idx
+    $(".slides").transition x: "#{portPosition}px", 200, '_default'
 
-    slide.active(false) for slide in this.slides()
-    this.slides()[idx]?.active(true)
+    slide.active(false) for slide in @slides()
+    @slides()[idx]?.active(true)
 
-  slider.extend throttle: 200
+  slider.extend throttle: 50
 
-  this.resize = () =>
-    this.height       $(window).height()
-    this.width        $(window).width()
-    this.headerHeight $("header").height()
-    this.footerHeight $(".footer").height()
+  @resize = () =>
+    @height       $(window).height()
+    @width        $(window).width()
+    @headerHeight $("header").height()
+    @footerHeight $(".footer").height()
 
-  this.rotate = (binding, evt) =>
+  @rotate = (binding, evt) =>
     idx = if evt.keyCode?
       switch evt.keyCode
         when 39, 32, 9 # Right arrow, space, tab
-          this.nextIndex().next
+          @nextIndex().next
         when 37 # Left arrow
-          this.nextIndex().prev
+          @nextIndex().prev
     else
       parseInt $(evt.target).attr("href").slice(1), 10
 
-    this.currentSlideIndex idx if idx?
+    @currentSlideIndex idx if idx?
 
-  this.fullscreen = (binding, evt) =>
+  @fullscreen = (binding, evt) =>
     $("body")[0].webkitRequestFullscreen()
     $("body").trigger 
     
-  this.load = () =>
+  @load = () =>
     $.get("config/grapple.json").done (response) =>
-      this.graphiteHost(response.graphiteHost)
-      this.format(response.format)
+      @graphiteHost(response.graphiteHost)
+      @format(response.format)
       _(response.slides).each (settings) =>
-        this.slides.push new Slide(this, settings)
+        @slides.push new Slide(this, settings)
 
-  this.load()
+  @load()
+
   return this
 
 ko.bindingHandlers.plot =
