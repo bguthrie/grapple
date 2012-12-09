@@ -1,5 +1,5 @@
 {
-  "graphiteHost": "http://graphite.watchdog.net",
+  "graphiteHost": "http://graphite.example.com",
   "format": "%l:%M%p",
 
   "slides": [ {

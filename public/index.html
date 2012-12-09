@@ -34,12 +34,15 @@
       <div class="settings" data-bind="visible: settingsVisible">
         <form action="/settings" method="post" accept-charset="utf-8">
           <fieldset>
-            <legend>Settings</legend>
+            <legend>global settings</legend>
            
             <label>Graphite host <input type="text" name="graphiteHost" data-bind="value: graphiteHost" id="graphiteHost"></input></label>
+          </fieldset>
 
+          <fieldset>
+            <legend>current slide</legend>
             <ul class="slide-settings" data-bind="foreach: slides">
-              <li>
+              <li data-bind="css: { active: active }">
                 <label>Title <input type="text" name="title" data-bind="value: title"></input></label>
                 <label>Subtitle <input type="text" name="subtitle" data-bind="value: subtitle"></input></label>
                 <label>Update frequency <input type="text" name="refreshInterval" data-bind="value: refreshInterval"></input></label>

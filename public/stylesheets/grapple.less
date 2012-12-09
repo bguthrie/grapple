@@ -163,13 +163,14 @@ body {
     background-color: rgba(19, 40, 59, 0.8);
     z-index: 1;
     overflow: auto;
+    padding: 10px;
 
     form {
       fieldset {
         border: none;
 
         legend {
-          padding: 0 10px;
+          margin-bottom: 5px;
           display: inline-block;
           width: 100%;
           font-size: 200%;
@@ -180,37 +181,48 @@ body {
       label {
         font-size: 80%; 
         font-weight: 500;
-        margin: 0 5px;
 
-        > input { }
+        > input {
+          margin-bottom: 10px;
+        }
       }
       
       input {
         display: block;
-        margin: 3px 10px 10px 10px;
       }
 
       input[type=text] {
         width: 100%;
         font-size: 120%;
-        padding: 5px;
-        background-color: lighten(@background, 10%);
+        padding: 3px;
+        background-color: rgba(19, 40, 59, 1.0);
         border: none;
         color: white;
         border-radius: 2px;
+        border: 2px solid rgba(19, 40, 59, 1.0);
+        -webkit-transition: border 0.1s;
+
+        &:focus {
+          outline: none;
+          border: 2px solid lighten(@background, 10%);
+        }
       }
 
       ul.slide-settings {
         > li {
           margin-top: 10px;
-          border-left: 10px solid #777;
+          display: none;
+
+          &.active { 
+            display: block;
+          }
         }
       }
 
       ul.data-series-settings {
         > li {
           border-top: 1px solid #777;
-          margin-top: 10px;
+          margin: 10px 0;
         }
       }
     }
