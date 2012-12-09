@@ -1,318 +1,221 @@
-interval = (ms, fn) -> window.setInterval fn, ms
-timeout  = (ms, fn) -> window.setTimeout fn, ms
+Grapple =
+  sources: []
 
-RandomData =
-  generator: (interval) ->
-    totalSeconds = 3600
-    totalPoints = totalSeconds / 10
-    data = []
-    date = new Date()
-    now = Math.floor( date.getTime() / 1000 )
-    startTime = now - totalSeconds
+Grapple.sources.random = (series) ->
+  interval = series.slide.refreshInterval()
+  totalSeconds = 3600
+  totalPoints = totalSeconds / 10
+  data = []
+  date = new Date()
+  now = Math.floor( date.getTime() / 1000 )
+  startTime = now - totalSeconds
 
-    refresh: () ->
-      if data.length > 0
-        data = data.slice 1
+  refresh: () ->
+    if data.length > 0
+      data = data.slice 1
 
-      while data.length < totalPoints
-        previous = if data.length > 0
-          data[data.length - 1]
-        else
-          [ startTime, 1 ]
-
-        [ oldTime, oldY ] = previous
-        y = Math.max( 0.0, oldY + Math.random() - 0.48 )
-        time = oldTime + interval
-
-        data.push [ time, y ]
-
-      data
-
-window.Grapple =
-  resize: () ->
-    totalHeight = $(window).height()
-    totalWidth = $(window).width()
-    headerHeight = $("header").height()
-    curtainHeight = totalHeight - headerHeight
-    slidemarkerHeight = 0.7 * headerHeight
-    chartLabelFontSize = 0.35 * headerHeight
-
-    $("#viewport").css height: curtainHeight, width: totalWidth, top: headerHeight, fontSize: chartLabelFontSize
-    $('.slidemarkers a').css width: slidemarkerHeight, height: slidemarkerHeight
-
-    Grapple.resizeSlides()
-
-  resizeSlides: () ->
-    totalHeight = $(window).height()
-    totalWidth = $(window).width()
-    headerHeight = $("header").height()
-    curtainHeight = totalHeight - headerHeight
-
-    slides = $(".slide")
-    $(".slides").css width: totalWidth * slides.length
-
-    for s, i in slides
-      $s = $(s)
-      $s.css height: curtainHeight, width: totalWidth, left: totalWidth * i
-      $s.find('.placeholder').css height: $s.height() - $s.find(".footer").height()
-      $s.data('plot')?.redraw()
-
-  slideTo: (slideIndex, callback) ->
-    return if Grapple.sliding
-    Grapple.sliding = true
-
-    if slideIndex >= 0
-      markers = $(".slidemarkers a")
-      window.history.pushState {}, "", "#" + slideIndex
-      $.when(
-        markers.transition opacity: 0.2, 500, '_default'
-      ).then(
-        $(markers[slideIndex]).transition opacity: 0.8, 500, '_default')
-
-    totalWidth = $(window).width()
-    portPosition = totalWidth * -slideIndex
-    $(".slides").transition x: "#{portPosition}px", 1000, '_default', () ->
-      Grapple.sliding = false
-      callback() if callback?
-
-  defaults:
-    graphiteHost: "localhost"
-    refreshInterval: 10000
-    transitionInterval: 20000
-    format: "%m/%d %I%p"
-    rotate: true
-
-  sliding: false
-  paused: false
-
-  indexFromUrl: (url) ->
-    parseInt url.slice(1), 10
-
-  assembleSlides: (viewport, slides) ->
-    slideContainer = viewport.find(".slides")
-
-    for slide, i in slides
-      $(".slidemarkers").append $("<a>").attr("href", "#" + i)
-      slideContainer.append $("<div>").addClass("slide").attr("id", i)
-
-    $(".slidemarkers a").click (evt) ->
-      Grapple.slideTo Grapple.indexFromUrl($(this).attr("href"))
-      evt.preventDefault()
-
-    Grapple.resizeSlides()
-
-    slideContainer.find(".slide")
-
-  renderSettings: (viewport, config) ->
-    basicSettings = 
-      graphiteHost:       { label: "Graphite host", type: "text", default: "http://graphite.example.com" }
-      transitionInterval: { label: "Slide transition interval", type: "text", default: 20000 }
-      format:             { label: "Date/time format", type: "text", default: "%l:%M%p" }
-
-    slideSettings =
-      data:     { label: "Data Source", type: "select", default: "graphite", items: [["Graphite", "graphite"], ["Random", "random"]] }
-      title:    { label: "Slide title", type: "text", default: "" }
-      subtitle: { label: "Subtitle",    type: "text", default: "" }
-      colors:   { label: "Colors",      type: "text", default: "RGB or hex (comma-separated)" }
-      labels:   { label: "Labels",      type: "text", default: "String (comma-separated)" }
-
-    dataSettings =
-      random:
-        refreshInterval: { label: "Data refresh interval", type: "text", default: 1000 }
-
-      graphite:
-        refreshInterval: { label: "Data refresh interval", type: "text", default: 10000 }
-        from:            { label: "Duration",    type: "text", default: "Graphite duration (ex: -1week)" }
-        target:          { label: "Targets",     type: "text", default: "Graphite targets (comma-separated)" }
-
-    inputFor = (name, setting, config) ->
-      label = $("<label>").text(setting.label)
-      value = config[name] || setting.default
-      input = if setting.type is "select"
-        options = for item in setting.items
-          $("<option>").val(item[1]).text(item[0]).attr(selected: item[1] is value)
-        $("<select>").attr(name: name, disabled: true).append(options)
+    while data.length < totalPoints
+      previous = if data.length > 0
+        data[data.length - 1]
       else
-        $("<input>").attr(name: name, type: setting.type, value: value, readonly: true)
+        [ startTime, 1 ]
 
-      $("<p>").append(label, input)
+      [ oldTime, oldY ] = previous
+      y = Math.max( 0.0, oldY + Math.random() - 0.48 )
+      time = oldTime + interval
 
-    settings = viewport.find(".settings")
-    form = settings.find("form")
+      data.push [ time, y ]
 
-    form.append $("<h3>").text("Settings")
-    fset = $("<fieldset>")
-    form.append fset
-    for settingName, setting of basicSettings
-      fset.append inputFor(settingName, setting, config)
+    $.Deferred () ->
+      @resolve data
 
-    form.append $("<h3>").text("Slides")
-    for slide in config.slides
-      fset = $("<fieldset>")
-      form.append fset
-      for settingName, setting of $.extend(slideSettings, dataSettings[slide.data])
-        fset.append inputFor(settingName, setting, slide)
+Grapple.sources.graphite = (series) ->
+  host = series.slide.config.graphiteHost()
+  target = series.target()
+  from = series.slide.from()
+  graphiteUrl = "#{host}/render?target=#{target}&from=#{from}&format=json"
 
-    $("header nav a.settings").click (evt) -> settings.fadeIn() if settings.is(":hidden"); evt.preventDefault()
-    settings.find("nav a.close").click (evt) -> settings.fadeOut() unless settings.is(":hidden"); evt.preventDefault()
-    settings.click (evt) -> evt.stopPropagation(); evt.preventDefault()
-    viewport.click (evt) -> settings.fadeOut() unless settings.is(":hidden"); evt.preventDefault()
+  refresh: () =>
+    $.Deferred (def) =>
+      request = $.ajax(graphiteUrl, method: "get", dataType: "jsonp", jsonp: "jsonp")
 
-  begin: (viewport, config) ->
-    config = $.extend {}, Grapple.defaults, config
-    viewport = $(viewport)
+      request.error (response) ->
+        console.log(response)
+        def.resolve []
 
-    $("h1.appname").fitText(3.0)
-    viewport.find(".loading").fitText(1.0)
-    $("header").fitText(5.0)
+      request.done (response) ->
+        target = response[0]
+        datapoints = target.datapoints.map (p) -> [ p[1] * 1000, p[0] ]
+        def.resolve datapoints
 
-    Grapple.renderSettings(viewport, config)
+DataSeries = (slide, settings) ->
+  this[setting] = ko.observable(settings[setting]) for setting in ["color", "label", "source", "target"]
+  @points = ko.observable([])
+  @slide = slide
 
-    slides = config.slides.map (slide) ->
-      extensions = host: config.graphiteHost, format: config.format
-      slide = $.extend {}, extensions, slide
-      Grapple.Slide.chart slide
+  @sources = ko.computed () => ( name for name, fn of Grapple.sources )
 
-    containers = Grapple.assembleSlides viewport, slides
-    currentIndex = Grapple.indexFromUrl(window.location.hash) || 0
+  @lastValue = ko.computed () =>
+    point = @points()[ @points().length - 1 ]
+    if point?
+      parseFloat(point[1]).toFixed(1)
+    else 0
 
-    $(window).resize Grapple.resize
-    Grapple.resize()
+  @size = ko.computed () =>
+    0.5 * slide.config.headerHeight()
 
-    Grapple.slideTo -1, () ->
-      slide = slides[currentIndex]
-      slide.refresh (data) ->
-        slide.render $(containers[currentIndex]), data
-        viewport.find(".loading").fadeOut () ->
-          Grapple.slideTo(currentIndex)
+  @generator = ko.computed () =>
+    Grapple.sources[@source()](this)
 
-      for slide, i in slides
-        if i isnt currentIndex
-          slide.refresh (data) ->
-            slide.render $(containers[i]), data
+  @refresh = () =>
+    $.Deferred (def) =>
+      @generator().refresh().done (points) =>
+        @points(points)
+        def.resolve(points)
 
-    if config.transitionInterval? && config.transitionInterval isnt ""
-      interval config.transitionInterval, () ->
-        currentIndex = ( currentIndex + 1 ) % slides.length
-        Grapple.slideTo currentIndex
+  return this
 
-    $(window).on 'keyup', (evt) ->
-      unless Grapple.sliding
-        if evt.keyCode is 37
-          currentIndex = if currentIndex is 0 then slides.length - 1 else currentIndex - 1
-          Grapple.slideTo currentIndex
-        else if evt.keyCode is 39
-          currentIndex = ( currentIndex + 1 ) % slides.length
-          Grapple.slideTo currentIndex
+Slide = (config, settings) ->
+  this[setting] = ko.observable(settings[setting]) for setting in ["title", "subtitle"]
 
-  Slide:
+  @config = config
+  @points = ko.observableArray()
+  @active = ko.observable(false)
+  @from = ko.observable(settings.from || "-1week")
+  @refreshInterval = ko.observable(settings.refreshInterval || 10000)
+  @series = ko.observableArray(new DataSeries(this, config) for config in settings.series)
 
-    chart: (slide) ->
-      spec = slide.data
+  @markerSize = ko.computed () =>
+    0.7 * @config.headerHeight()
 
-      if spec is "random"
-        generator = RandomData.generator(slide.refreshInterval)
-      else
-        targets = (spec.target.map (t) -> "target=#{t}").join("&")
-        graphiteUrl = "#{slide.host}/render?#{targets}&from=#{slide.data.from}&format=json"
+  @height       = @config.curtainHeight
+  @width        = @config.width
+  @footerHeight = ko.observable()
 
-      labels = slide.labels || spec.target
-      series = labels.map (label) -> { label: label, data: [] }
+  @chartHeight = ko.computed () =>
+    @height() - @footerHeight()
 
-      render = (root, datapoints) ->
-        s.data = datapoints[i] for s, i in series
+  @resize = (binding, evt) =>
+    if $(evt.target).is(".slide")
+      @footerHeight $(evt.target).find("footer").height()
 
-        placeholder = $("<div>").addClass("placeholder")
-        title = $("<h1>").addClass("title").text(slide.title)
-        subtitle = $("<h2>").addClass("subtitle").text(slide.subtitle)
-        legend = $("<div>").addClass("legend").text("Legend")
-        footer = $("<div>").addClass("footer").append(legend, title, subtitle)
-        $(root).append(placeholder, footer)
+  @refresh = () =>
+    $.when(series.refresh() for series in @series()).then () =>
+      @points({ data: series.points(), label: series.label() } for series in @series())
 
-        title.fitText(2.0)
-        subtitle.fitText(4.0)
-        legend.fitText(4.5)
+  window.setInterval @refresh, @refreshInterval()
+  @refresh()
 
-        placeholder.css height: root.height() - footer.height()
+  return this
 
-        plot = $.plot placeholder, series,
-          xaxis:
-            mode: "time", 
-            timeformat: slide.format
-            color: "white"
-          yaxis:
-            color: "white"
-          grid:
-            color: "#777"
-            borderWidth: 1
-          colors:
-            slide.colors
-          legend:
-            container: legend
-            show: true
+Root = () ->
+  @graphiteHost      = ko.observable()
+  @format            = ko.observable()
+  @slides            = ko.observableArray()
+  @settingsVisible   = ko.observable(false)
 
-        $.extend plot, Grapple.RedrawablePlot, legend: legend
+  @height            = ko.observable()
+  @width             = ko.observable()
+  @headerHeight      = ko.observable()
 
-        $(root).data("plot", plot)
-        plot.redrawLegend()
+  prevLoc = parseInt(window.location.hash.slice(1), 10)
+  @currentSlideIndex = ko.observable(prevLoc || 0)
 
-        interval slide.refreshInterval, () ->
-          refresh (datapoints) ->
-            update plot, datapoints
+  @slideCount = ko.computed () => 
+    @slides().length
 
-      update = (plot, datapoints) ->
-        s.data = datapoints[i] for s, i in series
-        plot.setData(series)
-        plot.redraw()
+  @nextIndex = ko.computed () => 
+    idx = @currentSlideIndex()
+    len = @slides().length
+    { next: ( idx + 1 ) % len,  prev: if idx is 0 then len - 1 else idx - 1 }
 
-      refresh = (callback) ->
-        if generator
-          callback [ generator.refresh() ]
-        else
-          chartData = $.ajax graphiteUrl, method: "get", dataType: "jsonp", jsonp: "jsonp"
+  @curtainHeight = ko.computed () =>
+    @height() - @headerHeight()
 
-          chartData.error (response) ->
-            console.log "error reloading", graphiteUrl
+  @rootFontSize = ko.computed () =>
+    "#{@width() / 14.0}%" # Magic numbers are magic.
 
-          chartData.done (response) ->
-            datapoints = response.map (target) -> ( target.datapoints.map (p) -> [ p[1] * 1000, p[0] ] )
-            callback datapoints
+  @slideContainerWidth = ko.computed () =>
+    @width() * @slideCount()
 
-      refresh: refresh, render: render, slide: slide
+  slider = ko.computed () =>
+    idx = @currentSlideIndex()
+    if idx >= 0 then window.history.pushState {}, "", "#" + idx
 
-  RedrawablePlot:
-    redrawLegend: () ->
-      labels = @legend.find(".legendLabel").map -> $(this).text()
-      colors = @legend.find(".legendColorBox").map -> $(this).find("> div > div").css("borderColor")
-      colorSize = @legend.css "fontSize"
+    portPosition = @width() * -idx
+    $(".slides").transition x: "#{portPosition}px", 200, '_default'
 
-      @legend.find("table").remove()
-      for pair in _.zip(labels, colors)
-        [label, color] = pair
+    slide.active(false) for slide in @slides()
+    @slides()[idx]?.active(true)
 
-        seriesLegend = $("<div>").addClass("series").append(
-          $("<div>").addClass("color").css(backgroundColor: color, width: colorSize, height: colorSize),
-          $("<div>").addClass("label").text(label))
+  slider.extend throttle: 50
 
-        @legend.append seriesLegend
+  @resize = (binding, evt) =>
+    @height       $(evt.target).height()
+    @width        $(evt.target).width()
+    @headerHeight $(evt.target).find("header").height()
 
-    redraw: () ->
-      @resize()
-      @setupGrid()
-      @draw()
-      @redrawLegend()
+  @rotate = (binding, evt) =>
+    idx = if evt.keyCode? and $(":focus").length is 0
+      switch evt.keyCode
+        when 39, 32, 9 # Right arrow, space, tab
+          @nextIndex().next
+        when 37 # Left arrow
+          @nextIndex().prev
+    else if target = $(evt.currentTarget).attr("href")
+      parseInt target.slice(1), 10
 
+    @currentSlideIndex idx if idx?
+
+  @fullscreen = (binding, evt) =>
+    $("body")[0].webkitRequestFullscreen()
+
+  @showSettings = (binding, evt) =>
+    @settingsVisible !@settingsVisible()
+    
+  @load = () =>
+    $.get("config/grapple.json").done (response) =>
+      @graphiteHost(response.graphiteHost)
+      @format(response.format)
+      _(response.slides).each (settings) =>
+        @slides.push new Slide(this, settings)
+
+  @load()
+
+  return this
+
+ko.bindingHandlers.plot =
+  init: (elt, value, allBindings, slide, context) ->
+    format = context.$root.format()
+
+    plot = $.plot elt, slide.points(),
+      xaxis:
+        mode: "time", 
+        timeformat: format
+        color: "white"
+        tickLength: 0
+      yaxis:
+        color: "white"
+        tickLength: 0
+      grid:
+        color: "#777"
+        borderWidth: 0
+      legend: false
+      colors: ( s.color() for s in slide.series() )
+
+    $(elt).data "plot", plot
+    series.color(plot.getOptions().colors[i]) for series, i in slide.series()
+
+    $("body").trigger "resize"
+
+  update: (elt, value, allBindings, slide, context) ->
+    plot = $(elt).data "plot"
+    plot.getOptions().colors = (series.color() for series in slide.series())
+    plot.setData slide.points()
+    plot.resize()
+    plot.setupGrid()
+    plot.draw()
 
 $ ->
-  settings = $.get("config/grapple.json")
-  viewport = $("#viewport")
-
-  settings.fail (response) ->
-    viewport.find(".loading").text "error"
-    viewport.find(".more").
-      text("could not load or parse configuration | ").
-      append($("<a>").text("help").attr("href", "https://github.com/bguthrie/grapple/blob/master/README.md"))
-
-  settings.done (response) ->
-    viewport.find(".loading").text("please wait")
-    Grapple.begin(viewport, response)
+  ko.applyBindings new Root()
+  $("body").trigger("resize")
