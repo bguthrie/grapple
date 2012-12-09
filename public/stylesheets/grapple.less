@@ -70,18 +70,20 @@ body {
   .slidemarkers {
     position: absolute;
     width: 100%;
-    top: 1%;
+    top: 0;
     left: 0;
     text-align: center;
+    font-size: 200%;
 
     li {
       display: inline-block;
 
       a {
         -webkit-transition: opacity 0.1s;
-        background-color: white;
+        // background-color: white;
         opacity: 0.2;
-        border-radius: 4px;
+        padding: 8px 0;
+        // border-radius: 4px;
         margin-left: 0.5%;
         display: inline-block;
 
@@ -240,8 +242,17 @@ body {
 
       ul.data-series-settings {
         > li {
-          border-top: 1px solid #777;
           margin: 10px 0;
+          padding-left: 15px;
+          position: relative;
+          .handle {
+            height: 100%;
+            width: 10px;
+            background-color: #777;
+            position: absolute;
+            left: 0;
+            top: 0;
+          }
         }
       }
     }

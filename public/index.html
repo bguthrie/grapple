@@ -23,9 +23,19 @@
       </nav>
     </header>
 
-    <ul class="slidemarkers" data-bind="foreach: slides">
+    <ul class="slidemarkers">
       <li>
-        <a data-bind="attr: { href: '#' + $index() }, click: $parent.rotate, css: { active: active }, style: { width: markerSize, height: markerSize }"></a>
+        <a data-bind="attr: { href: '#' + nextIndex().prev }, click: rotate"><i class="icon-chevron-left icon-large"></i></a>
+      </li>
+      <!-- ko foreach: slides -->
+      <li class="marker">
+        <a data-bind="attr: { href: '#' + $index() }, click: $parent.rotate, css: { active: active }">
+          <i class="icon-sign-blank icon-large"></i>
+        </a>
+      </li>
+      <!-- /ko -->
+      <li>
+        <a data-bind="attr: { href: '#' + nextIndex().next }, click: rotate"><i class="icon-chevron-right icon-large"></i></a>
       </li>
     </ul>
 
@@ -48,7 +58,9 @@
 
                 <ul class="data-series-settings" data-bind="foreach: series">
                   <li>
+                    <div class="handle"></div>
                     <label>Label <input type="text" name="label" data-bind="value: label"></input></label>
+                    <label>Source <select name="source" data-bind="options: sources, value: source"></input></label>
                     <input type="color" name="color" data-bind="value: color"></input>
                   </li>
                 </ul>

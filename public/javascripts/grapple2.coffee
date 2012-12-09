@@ -1,4 +1,7 @@
-RandomDataSource = (series) ->
+Grapple =
+  sources: []
+
+Grapple.sources.random = (series) ->
   interval = series.slide.refreshInterval()
   totalSeconds = 3600
   totalPoints = totalSeconds / 10
@@ -7,7 +10,7 @@ RandomDataSource = (series) ->
   now = Math.floor( date.getTime() / 1000 )
   startTime = now - totalSeconds
 
-  @refresh = () ->
+  refresh: () ->
     if data.length > 0
       data = data.slice 1
 
@@ -26,15 +29,13 @@ RandomDataSource = (series) ->
     $.Deferred () ->
       @resolve data
 
-  return this
-
-GraphiteDataSource = (series) ->
+Grapple.sources.graphite = (series) ->
   host = series.slide.config.graphiteHost()
   target = series.target()
   from = series.slide.from()
   graphiteUrl = "#{host}/render?target=#{target}&from=#{from}&format=json"
 
-  @refresh = () =>
+  refresh: () =>
     $.Deferred (def) =>
       request = $.ajax(graphiteUrl, method: "get", dataType: "jsonp", jsonp: "jsonp")
 
@@ -47,12 +48,12 @@ GraphiteDataSource = (series) ->
         datapoints = target.datapoints.map (p) -> [ p[1] * 1000, p[0] ]
         def.resolve datapoints
 
-  return this
-
 DataSeries = (slide, settings) ->
   this[setting] = ko.observable(settings[setting]) for setting in ["color", "label", "source", "target"]
   @points = ko.observable([])
   @slide = slide
+
+  @sources = ko.computed () => ( name for name, fn of Grapple.sources )
 
   @lastValue = ko.computed () =>
     point = @points()[ @points().length - 1 ]
@@ -64,10 +65,7 @@ DataSeries = (slide, settings) ->
     0.5 * slide.config.headerHeight()
 
   @generator = ko.computed () =>
-    if @source() is "random"
-      new RandomDataSource(this)
-    else
-      new GraphiteDataSource(this)
+    Grapple.sources[@source()](this)
 
   @refresh = () =>
     $.Deferred (def) =>
@@ -153,7 +151,6 @@ Root = () ->
   slider.extend throttle: 50
 
   @resize = (binding, evt) =>
-    console.log evt.target
     @height       $(evt.target).height()
     @width        $(evt.target).width()
     @headerHeight $(evt.target).find("header").height()
@@ -165,7 +162,7 @@ Root = () ->
           @nextIndex().next
         when 37 # Left arrow
           @nextIndex().prev
-    else if target = $(evt.target).attr("href")
+    else if target = $(evt.currentTarget).attr("href")
       parseInt target.slice(1), 10
 
     @currentSlideIndex idx if idx?
