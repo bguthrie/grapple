@@ -1,4 +1,5 @@
-RandomDataSource = (interval) ->
+RandomDataSource = (series) ->
+  interval = series.slide.refreshInterval()
   totalSeconds = 3600
   totalPoints = totalSeconds / 10
   data = []
@@ -27,8 +28,11 @@ RandomDataSource = (interval) ->
 
   return this
 
-GraphiteDataSource = (host, source, from) ->
-  graphiteUrl = "#{host}/render?target=#{source}&from=#{from}&format=json"
+GraphiteDataSource = (series) ->
+  host = series.slide.config.graphiteHost()
+  target = series.target()
+  from = series.slide.from()
+  graphiteUrl = "#{host}/render?target=#{target}&from=#{from}&format=json"
 
   @refresh = () =>
     $.Deferred (def) =>
@@ -46,9 +50,9 @@ GraphiteDataSource = (host, source, from) ->
   return this
 
 DataSeries = (slide, settings) ->
-  this[setting] = ko.observable(settings[setting]) for setting in ["color", "label", "source", "from"]
-  @from = ko.observable(settings.from || "-1week")
+  this[setting] = ko.observable(settings[setting]) for setting in ["color", "label", "source", "target"]
   @points = ko.observable([])
+  @slide = slide
 
   @lastValue = ko.computed () =>
     point = @points()[ @points().length - 1 ]
@@ -61,9 +65,9 @@ DataSeries = (slide, settings) ->
 
   @generator = ko.computed () =>
     if @source() is "random"
-      new RandomDataSource(slide.refreshInterval())
+      new RandomDataSource(this)
     else
-      new GraphiteDataSource(slide.config.graphiteHost(), @source(), @from())
+      new GraphiteDataSource(this)
 
   @refresh = () =>
     $.Deferred (def) =>
@@ -74,26 +78,35 @@ DataSeries = (slide, settings) ->
   return this
 
 Slide = (config, settings) ->
-  this[setting] = ko.observable(settings[setting]) for setting in ["title", "subtitle", "refreshInterval"]
+  this[setting] = ko.observable(settings[setting]) for setting in ["title", "subtitle"]
+
   @config = config
   @points = ko.observableArray()
   @active = ko.observable(false)
+  @from = ko.observable(settings.from || "-1week")
+  @refreshInterval = ko.observable(settings.refreshInterval || 10000)
   @series = ko.observableArray(new DataSeries(this, config) for config in settings.series)
 
   @markerSize = ko.computed () =>
     0.7 * @config.headerHeight()
 
-  @height = @config.curtainHeight
-  @width  = @config.width
+  @height       = @config.curtainHeight
+  @width        = @config.width
+  @footerHeight = ko.observable()
 
   @chartHeight = ko.computed () =>
-    @height() - @config.footerHeight()
+    @height() - @footerHeight()
+
+  @resize = (binding, evt) =>
+    if $(evt.target).is(".slide")
+      @footerHeight $(evt.target).find("footer").height()
 
   @refresh = () =>
     $.when(series.refresh() for series in @series()).then () =>
       @points({ data: series.points(), label: series.label() } for series in @series())
 
   window.setInterval @refresh, @refreshInterval()
+  @refresh()
 
   return this
 
@@ -101,13 +114,14 @@ Root = () ->
   @graphiteHost      = ko.observable()
   @format            = ko.observable()
   @slides            = ko.observableArray()
-  @currentSlideIndex = ko.observable(0)
   @settingsVisible   = ko.observable(false)
 
   @height            = ko.observable()
   @width             = ko.observable()
   @headerHeight      = ko.observable()
-  @footerHeight      = ko.observable()
+
+  prevLoc = parseInt(window.location.hash.slice(1), 10)
+  @currentSlideIndex = ko.observable(prevLoc || 0)
 
   @slideCount = ko.computed () => 
     @slides().length
@@ -121,7 +135,7 @@ Root = () ->
     @height() - @headerHeight()
 
   @rootFontSize = ko.computed () =>
-    @width() / 14.0 # Magic numbers are magic.
+    "#{@width() / 14.0}%" # Magic numbers are magic.
 
   @slideContainerWidth = ko.computed () =>
     @width() * @slideCount()
@@ -138,11 +152,11 @@ Root = () ->
 
   slider.extend throttle: 50
 
-  @resize = () =>
-    @height       $(window).height()
-    @width        $(window).width()
-    @headerHeight $("header").height()
-    @footerHeight $(".footer").height()
+  @resize = (binding, evt) =>
+    console.log evt.target
+    @height       $(evt.target).height()
+    @width        $(evt.target).width()
+    @headerHeight $(evt.target).find("header").height()
 
   @rotate = (binding, evt) =>
     idx = if evt.keyCode? and $(":focus").length is 0
@@ -161,7 +175,6 @@ Root = () ->
 
   @showSettings = (binding, evt) =>
     @settingsVisible !@settingsVisible()
-
     
   @load = () =>
     $.get("config/grapple.json").done (response) =>

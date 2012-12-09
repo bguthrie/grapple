@@ -91,36 +91,6 @@ body {
     }
   }
 
-  .footer {
-    position: absolute;
-    width: 100%;
-    bottom: 0;
-    left: 0;
-
-    padding-bottom: 1.5%;
-    padding-left: @left-distance;
-
-    h1 { font-weight: 500; text-transform: uppercase; margin-top: -0.5%; margin-bottom: -0.5%; }
-    h2 { font-weight: 300; color: @dark-yellow; }
-
-    .legend {
-      margin-top: 2%;
-      list-style-type: none;
-      font-size: 180%;
-      .series {
-        display: inline-block; 
-        clear: both; 
-        margin-right: 4%;
-        .color { display: inline-block; }
-        .label { font-weight: 300; }
-        .value { font-weight: 700; color: @dark-yellow; font-size: 80%; }
-      }
-    }
-
-    .title { font-size: 400%; }
-    .subtitle { font-size: 250%; }
-  }
-
   h1, h2, h3, h4, h5, h6 {
     font-weight: 100;
   }
@@ -130,12 +100,43 @@ body {
     overflow: hidden;
 
     .slides { position: absolute; }
-    .slide { 
+
+    .slide {
       position: absolute;
       .placeholder {
         min-height: 200px;
         font-size: 120%;
         margin: 0 20px;
+      }
+
+      footer {
+        position: absolute;
+        width: 100%;
+        bottom: 0;
+        left: 0;
+
+        padding-bottom: 1.5%;
+        padding-left: @left-distance;
+
+        h1 { font-weight: 500; text-transform: uppercase; margin-top: -0.5%; margin-bottom: -0.5%; }
+        h2 { font-weight: 300; color: @dark-yellow; }
+
+        .legend {
+          margin-top: 2%;
+          list-style-type: none;
+          font-size: 180%;
+          .series {
+            display: inline-block; 
+            clear: both; 
+            margin-right: 4%;
+            .color { display: inline-block; }
+            .label { font-weight: 300; }
+            .value { font-weight: 700; color: @dark-yellow; font-size: 80%; }
+          }
+        }
+
+        .title { font-size: 400%; }
+        .subtitle { font-size: 250%; }
       }
     }
 

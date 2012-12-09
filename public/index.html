@@ -14,7 +14,7 @@
     <script type="text/javascript" src="javascripts/jquery.transit.js"></script>
   </head>
 
-  <body data-bind="event: { resize: resize, keyup: rotate }, style: { fontSize: rootFontSize + '%' }">
+  <body data-bind="event: { resize: resize, keyup: rotate }, style: { fontSize: rootFontSize }">
     <header>
       <h1 class="appname">grapple</h1>
       <nav>
@@ -62,9 +62,9 @@
       <!-- <h3 class="more"></h3> -->
 
       <div class="slides" data-bind="foreach: slides">
-        <div class="slide" data-bind="attr: { id: $index }, style: { height: height, width: width, left: width() * $index() }" style="width: 800px;">
-          <div class="placeholder" data-bind="plot: points, style: { height: chartHeight }"></div>
-          <div class="footer">
+        <div class="slide" data-bind="attr: { id: $index }, style: { height: height, width: width, left: width() * $index() }, event: { resize: resize }, resizeBubble: false">
+          <div class="placeholder" data-bind="plot: points, style: { height: chartHeight }, resizeBubble: false"></div>
+          <footer>
             <ul class="legend" data-bind="foreach: series">
               <li class="series">
                 <span class="color" data-bind="style: { backgroundColor: color, width: size, height: size }"></span>
@@ -74,7 +74,7 @@
             </ul>
             <h1 class="title" data-bind="text: title"></h1>
             <h2 class="subtitle" data-bind="text: subtitle"></h2>
-          </div>
+          </footer>
         </div>
       </div>
     </div>
