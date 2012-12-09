@@ -8,7 +8,6 @@
     <script type="text/javascript" src="javascripts/jquery-1.8.1.min.js"></script>
     <script type="text/javascript" src="javascripts/underscore-1.4.2.min.js"></script>
     <script type="text/javascript" src="javascripts/knockout-2.2.0.js"></script>
-    <script type="text/javascript" src="javascripts/sammy-0.7.2.min.js"></script>
     <script type="text/javascript" src="javascripts/jquery.flot.js"></script>
     <script type="text/javascript" src="javascripts/jquery.flot.time.js"></script>
     <script type="text/javascript" src="javascripts/jquery.flot.resize.js"></script>
@@ -31,7 +30,7 @@
     </ul>
 
     <div class="viewport" data-bind="style: { height: curtainHeight, width: width, top: headerHeight }">
-      <div class="settings" data-bind="visible: settingsVisible">
+      <div class="settings" data-bind="css: { visible: settingsVisible }">
         <form action="/settings" method="post" accept-charset="utf-8">
           <fieldset>
             <legend>global settings</legend>

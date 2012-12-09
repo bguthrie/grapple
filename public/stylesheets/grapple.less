@@ -1,7 +1,10 @@
 @background: #071521;
+@settingsBackground: rgba(19, 40, 59, 0.8);
+@inputBackground: #153654;
 @error-red: #C74242;
 @dark-yellow: #EDA839;
 @left-distance: 3%;
+@font-family: "Helvetica Neue", "HelveticaNeue", Helvetica, Arial, sans-serif;
 
 @import "font-awesome.less";
 
@@ -23,7 +26,7 @@ ul {
 body {
   background-color: @background;
   color: white;
-  font-family: "Helvetica Neue", "HelveticaNeue", Helvetica, Arial, sans-serif;
+  font-family: @font-family;
   font-weight: 100;
 
   header {
@@ -43,6 +46,8 @@ body {
       top: 0;
       right: 0;
       z-index: 1;
+      background-color: none;
+      -webkit-transition: background-color 0.2s linear;
 
       a {
         color: #2d343c;
@@ -55,7 +60,8 @@ body {
 
         &.active {
           color: lighten(#2d343c, 80%);
-          background-color: rgba(19, 40, 59, 0.8);
+          -webkit-transition: background-color 0.2s linear;
+          background-color: @settingsBackground;
         }
       }
     }
@@ -129,6 +135,7 @@ body {
       .placeholder {
         min-height: 200px;
         font-size: 120%;
+        margin: 0 20px;
       }
     }
 
@@ -160,10 +167,20 @@ body {
     right: 0;
     top: 0;
     height: 100%;
-    background-color: rgba(19, 40, 59, 0.8);
+    background-color: @settingsBackground;
     z-index: 1;
     overflow: auto;
     padding: 10px;
+
+    visibility: hidden;
+    opacity: 0;
+    -webkit-transition: visibility 0s linear 0.2s, opacity 0.2s linear;
+
+    &.visible {
+      visibility: visible;
+      opacity: 1;
+      -webkit-transition-delay: 0s;
+    }
 
     form {
       fieldset {
@@ -183,28 +200,29 @@ body {
         font-weight: 500;
 
         > input {
+          margin-top: 4px;
           margin-bottom: 10px;
         }
       }
       
       input {
         display: block;
+        font-family: @font-family
       }
 
       input[type=text] {
         width: 100%;
         font-size: 120%;
         padding: 3px;
-        background-color: rgba(19, 40, 59, 1.0);
-        border: none;
         color: white;
         border-radius: 2px;
-        border: 2px solid rgba(19, 40, 59, 1.0);
+        background-color: @inputBackground;
+        border: 2px solid @inputBackground;
         -webkit-transition: border 0.1s;
 
         &:focus {
           outline: none;
-          border: 2px solid lighten(@background, 10%);
+          border: 2px solid lighten(@inputBackground, 10%);
         }
       }
 

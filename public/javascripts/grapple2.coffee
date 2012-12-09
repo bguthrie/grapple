@@ -32,7 +32,6 @@ GraphiteDataSource = (host, source, from) ->
 
   @refresh = () =>
     $.Deferred (def) =>
-      console.log graphiteUrl
       request = $.ajax(graphiteUrl, method: "get", dataType: "jsonp", jsonp: "jsonp")
 
       request.error (response) ->
@@ -196,7 +195,6 @@ ko.bindingHandlers.plot =
 
     $(elt).data "plot", plot
     series.color(plot.getOptions().colors[i]) for series, i in slide.series()
-    console.log plot.getOptions(0)
 
     $("body").trigger "resize"
 
