@@ -2,7 +2,7 @@ Grapple =
   sources: []
 
 Grapple.sources.random = (series) ->
-  interval = series.slide.refreshInterval()
+  interval = series.slide.refreshInterval() * 1000
   totalSeconds = 3600
   totalPoints = totalSeconds / 10
   data = []
@@ -102,7 +102,7 @@ Slide = (config, settings) ->
   @points = ko.observableArray()
   @active = ko.observable(false)
   @from = ko.observable(settings.from || "-1week")
-  @refreshInterval = ko.observable(settings.refreshInterval || 10)
+  @refreshInterval = ko.observable(settings.refreshInterval || 1)
   @series = ko.observableArray(new DataSeries(this, config) for config in settings.series)
 
   @markerSize = ko.computed () =>
@@ -145,16 +145,24 @@ Root = () ->
   @width             = ko.observable()
   @headerHeight      = ko.observable()
 
+  @shouldRotate      = ko.observable(false)
+  @rotateInterval    = ko.observable(10)
+
   prevLoc = parseInt(window.location.hash.slice(1), 10)
   @currentSlideIndex = ko.observable(prevLoc || 0)
 
   @slideCount = ko.computed () => 
     @slides().length
 
+  @currentSlide = ko.computed () =>
+    @slides()[ @currentSlideIndex() ]
+
   @nextIndex = ko.computed () => 
     idx = @currentSlideIndex()
-    len = @slides().length
-    { next: ( idx + 1 ) % len,  prev: if idx is 0 then len - 1 else idx - 1 }
+
+    next: Math.min(idx + 1, @slideCount() - 1)
+    prev: Math.max(idx - 1, 0)
+    loop: ( idx + 1 ) % @slideCount()
 
   @curtainHeight = ko.computed () =>
     @height() - @headerHeight()
@@ -182,11 +190,15 @@ Root = () ->
     @width        $(evt.target).width()
     @headerHeight $(evt.target).find("header").height()
 
-  @newSlide = (binding, evt) =>
+  @addSlide = (binding, evt) =>
     newSlideIndex = @slideCount()
     @slides.push new Slide(this, title: "", subtitle: "", series: [])
     @currentSlideIndex newSlideIndex
     @settingsVisible true
+
+  @removeSlide = (binding, evt) =>
+    @slides.remove @currentSlide()
+    @currentSlideIndex @nextIndex().prev
 
   @rotate = (binding, evt) =>
     idx = if evt.keyCode? and $(":focus").length is 0
@@ -203,7 +215,11 @@ Root = () ->
   @fullscreen = (binding, evt) =>
     $("body")[0].webkitRequestFullscreen()
 
-  @showSettings = (binding, evt) =>
+  @hideSettings = (binding, evt) =>
+    # Expensive, but I can't get bubbling disabled properly.
+    @settingsVisible(false) if $(evt.target).not(".settings") and $(evt.target).closest(".settings").length is 0
+
+  @toggleSettings = (binding, evt) =>
     @settingsVisible !@settingsVisible()
     
   @load = () =>

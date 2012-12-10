@@ -46,21 +46,21 @@ body {
       top: 0;
       right: 0;
       z-index: 1;
-      background-color: none;
-      -webkit-transition: background-color 0.2s linear;
+      background: none;
+      -webkit-transition: background 0.2s linear;
 
       a {
         color: #2d343c;
         display: inline-block;
-        padding: 8px 8px 0 8px;
+        padding: 0.35em;
 
         &:hover {
           color: lighten(#2d343c, 80%);
         }
 
         &.active {
+          -webkit-transition: background 0.2s linear;
           color: lighten(#2d343c, 80%);
-          -webkit-transition: background-color 0.2s linear;
           background-color: @settingsBackground;
         }
       }
@@ -184,11 +184,17 @@ body {
     }
 
     form {
+      font-size: 100%;
+      
       input, textarea, select {
         -webkit-appearance: none;
         display: block;
         font-family: @font-family;
-        font-size: 100%;
+        font-size: 120%;
+      }
+
+      input[type=checkbox] {
+        -webkit-appearance: checkbox;
       }
 
       fieldset {
@@ -204,7 +210,7 @@ body {
       }
 
       label {
-        font-size: 80%; 
+        font-size: 100%; 
         font-weight: 500;
 
         > input, select {
@@ -275,7 +281,7 @@ body {
       ul.data-series-settings {
         > li {
           margin: 0.5em 0;
-          padding-left: 10px;
+          padding-left: 0.5em;
           position: relative;
           .handle {
             height: 100%;

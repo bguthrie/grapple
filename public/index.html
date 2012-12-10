@@ -14,13 +14,15 @@
     <script type="text/javascript" src="javascripts/coffee-script-1.3.1.min.js"></script>
   </head>
 
-  <body data-bind="event: { resize: resize, keyup: rotate }, style: { fontSize: rootFontSize }">
+  <body data-bind="event: { resize: resize, keyup: rotate }, style: { fontSize: rootFontSize }, click: hideSettings">
     <header>
       <h1 class="appname">grapple</h1>
       <nav>
         <a href="#fullscreen" class="settings" data-bind="click: fullscreen"><i class="icon-fullscreen icon-large"></i></a>
-        <a href="#new" class="new" data-bind="click: newSlide"><i class="icon-plus icon-large"></i></a>
-        <a href="#settings" class="settings" data-bind="click: showSettings, css: { active: settingsVisible }"><i class="icon-list-ul icon-large"></i></a>
+        <a href="http://github.com/bguthrie/grapple" class="help"><i class="icon-question-sign icon-large"></i></a>
+        <a href="#new" class="new" data-bind="click: addSlide"><i class="icon-plus icon-large"></i></a>
+        <a href="#remove" class="remove" data-bind="click: removeSlide"><i class="icon-trash icon-large"></i></a>
+        <a href="#settings" class="settings" data-bind="click: toggleSettings, css: { active: settingsVisible }, style: { height: headerHeight }, clickBubble: false"><i class="icon-list-ul icon-large"></i></a>
       </nav>
     </header>
 
@@ -41,7 +43,7 @@
     </ul>
 
     <div class="viewport" data-bind="style: { height: curtainHeight, width: width, top: headerHeight }">
-      <div class="settings" data-bind="css: { visible: settingsVisible }">
+      <div class="settings" data-bind="css: { visible: settingsVisible }, clickBubble: false">
         <form action="/settings" method="post" accept-charset="utf-8">
           <fieldset>
             <legend>global settings</legend>
@@ -55,7 +57,8 @@
               <li data-bind="css: { active: active }">
                 <label>Title <input type="text" name="title" data-bind="value: title"></input></label>
                 <label>Subtitle <input type="text" name="subtitle" data-bind="value: subtitle"></input></label>
-                <!-- <label>Update frequency <input type="number" name="refreshInterval" data-bind="value: refreshInterval"></input></label> -->
+                <label>Update frequency <input type="number" name="refreshInterval" data-bind="value: refreshInterval"></input></label>
+                <a href="#" data-bind="click: addSeries, visible: series().length == 0"><i class="icon-plus"></i></a>
 
                 <ul class="data-series-settings" data-bind="foreach: series">
                   <li>
@@ -65,8 +68,8 @@
                     <select name="source" class="source" data-bind="options: sources, value: source"></select>
                     <input type="text" name="target" class="target" placeholder="target" data-bind="value: target, css: { error: !isValid() }, visible: source() == 'graphite'"></input>
                     <p class="error" data-bind="text: errorMessage"></p>
-                    <a href="#" data-bind="click: $parent.removeSeries" class="remove"><i class="icon-remove"></i></a>
-                    <a href="#" data-bind="click: $parent.addSeries"><i class="icon-plus"></i></a>
+                    <a href="#" data-bind="click: $parent.removeSeries" class="remove"><i class="icon-trash icon-large"></i></a>
+                    <a href="#" data-bind="click: $parent.addSeries"><i class="icon-plus icon-large"></i></a>
                   </li>
                 </ul>
               </li>
