@@ -80,11 +80,9 @@ body {
 
       a {
         -webkit-transition: opacity 0.1s;
-        // background-color: white;
         opacity: 0.2;
         padding: 8px 0;
-        // border-radius: 4px;
-        margin-left: 0.5%;
+        margin-left: -0.3em;
         display: inline-block;
 
         &:hover { opacity: 0.5; }
@@ -186,6 +184,13 @@ body {
     }
 
     form {
+      input, textarea, select {
+        -webkit-appearance: none;
+        display: block;
+        font-family: @font-family;
+        font-size: 100%;
+      }
+
       fieldset {
         border: none;
 
@@ -202,21 +207,37 @@ body {
         font-size: 80%; 
         font-weight: 500;
 
-        > input {
-          margin-top: 4px;
-          margin-bottom: 10px;
+        > input, select {
+          margin-top: 0.2em;
+          margin-bottom: 0.5em;
         }
       }
-      
-      input {
-        display: block;
-        font-family: @font-family
+
+      p.error {
+        color: @error-red;
+        margin-bottom: 0.5em;
+        font-weight: 300;
       }
 
-      input[type=text] {
+      input.color {
+        display: inline-block;
+        border: 0;
+        padding: 0;
+        margin: 0;
+        background: none;
+        vertical-align: bottom;
+        height: 2em;
+      }
+
+      input[type=text].label {
+        display: inline-block;
+        width: 80%;
+        float: right;
+      }
+
+      input[type=text], input[type=number], select {
         width: 100%;
-        font-size: 120%;
-        padding: 3px;
+        padding: 0.2em;
         color: white;
         border-radius: 2px;
         background-color: @inputBackground;
@@ -227,11 +248,22 @@ body {
           outline: none;
           border: 2px solid lighten(@inputBackground, 10%);
         }
+
+        &.error {
+          border: 2px solid @error-red;
+        }
+      }
+
+      select.source, input.target {
+        margin-top: 0.3em;
+      }
+
+      select.source {
       }
 
       ul.slide-settings {
         > li {
-          margin-top: 10px;
+          margin-top: 0.5em;
           display: none;
 
           &.active { 
@@ -242,12 +274,12 @@ body {
 
       ul.data-series-settings {
         > li {
-          margin: 10px 0;
-          padding-left: 15px;
+          margin: 0.5em 0;
+          padding-left: 10px;
           position: relative;
           .handle {
             height: 100%;
-            width: 10px;
+            width: 1px;
             background-color: #777;
             position: absolute;
             left: 0;

@@ -10,6 +10,8 @@ Grapple.sources.random = (series) ->
   now = Math.floor( date.getTime() / 1000 )
   startTime = now - totalSeconds
 
+  isReady: () -> true
+
   refresh: () ->
     if data.length > 0
       data = data.slice 1
@@ -30,48 +32,66 @@ Grapple.sources.random = (series) ->
       @resolve data
 
 Grapple.sources.graphite = (series) ->
-  host = series.slide.config.graphiteHost()
+  from   = series.slide.from()
   target = series.target()
-  from = series.slide.from()
-  graphiteUrl = "#{host}/render?target=#{target}&from=#{from}&format=json"
+  host   = series.slide.config.graphiteHost()
+
+  isReady: () => from? and target? and host?
 
   refresh: () =>
     $.Deferred (def) =>
-      request = $.ajax(graphiteUrl, method: "get", dataType: "jsonp", jsonp: "jsonp")
+      request = $.ajax "#{host}/render", 
+        method: "get"
+        dataType: "jsonp"
+        jsonp: "jsonp"
+        timeout: 1000
+        data: 
+          target: target
+          from: from
+          format: "json"
 
-      request.error (response) ->
-        console.log(response)
-        def.resolve []
+      request.fail (response) -> # Due to what appears to be a bug in jQuery, this is never called if the hostname doesn't point to a valid server.
+        def.reject "The server is slow or unreachable."
 
       request.done (response) ->
-        target = response[0]
-        datapoints = target.datapoints.map (p) -> [ p[1] * 1000, p[0] ]
-        def.resolve datapoints
+        if response.length is 0
+          def.reject "That stat was not found."
+        else
+          datapoints = response[0].datapoints.map (p) -> [ p[1] * 1000, p[0] ]
+          def.resolve datapoints
 
 DataSeries = (slide, settings) ->
   this[setting] = ko.observable(settings[setting]) for setting in ["color", "label", "source", "target"]
   @points = ko.observable([])
+  @errorMessage = ko.observable()
+  @isValid = ko.computed () => !@errorMessage()?
   @slide = slide
 
   @sources = ko.computed () => ( name for name, fn of Grapple.sources )
 
   @lastValue = ko.computed () =>
     point = @points()[ @points().length - 1 ]
-    if point?
-      parseFloat(point[1]).toFixed(1)
-    else 0
+    if point? then parseFloat(point[1]).toFixed(1) else 0
 
   @size = ko.computed () =>
     0.5 * slide.config.headerHeight()
 
   @generator = ko.computed () =>
-    Grapple.sources[@source()](this)
+    @points []
+    if sourceGen = Grapple.sources[@source()]
+      sourceGen(this)
 
   @refresh = () =>
     $.Deferred (def) =>
-      @generator().refresh().done (points) =>
-        @points(points)
-        def.resolve(points)
+      if @generator().isReady()
+        refresh = @generator().refresh()
+
+        refresh.done (points) => 
+          @errorMessage null
+          @points(points)
+          def.resolve(points)
+
+        refresh.fail (message) => @errorMessage message
 
   return this
 
@@ -82,7 +102,7 @@ Slide = (config, settings) ->
   @points = ko.observableArray()
   @active = ko.observable(false)
   @from = ko.observable(settings.from || "-1week")
-  @refreshInterval = ko.observable(settings.refreshInterval || 10000)
+  @refreshInterval = ko.observable(settings.refreshInterval || 10)
   @series = ko.observableArray(new DataSeries(this, config) for config in settings.series)
 
   @markerSize = ko.computed () =>
@@ -99,11 +119,18 @@ Slide = (config, settings) ->
     if $(evt.target).is(".slide")
       @footerHeight $(evt.target).find("footer").height()
 
+  @addSeries = (series) => 
+    newIndex = @series.indexOf(series) + 1
+    @series.splice newIndex, 0, new DataSeries(this, {})
+
+  @removeSeries = (series) =>
+    @series.remove series
+
   @refresh = () =>
     $.when(series.refresh() for series in @series()).then () =>
       @points({ data: series.points(), label: series.label() } for series in @series())
+      window.setTimeout @refresh, @refreshInterval() * 1000
 
-  window.setInterval @refresh, @refreshInterval()
   @refresh()
 
   return this
@@ -155,6 +182,12 @@ Root = () ->
     @width        $(evt.target).width()
     @headerHeight $(evt.target).find("header").height()
 
+  @newSlide = (binding, evt) =>
+    newSlideIndex = @slideCount()
+    @slides.push new Slide(this, title: "", subtitle: "", series: [])
+    @currentSlideIndex newSlideIndex
+    @settingsVisible true
+
   @rotate = (binding, evt) =>
     idx = if evt.keyCode? and $(":focus").length is 0
       switch evt.keyCode
@@ -177,8 +210,7 @@ Root = () ->
     $.get("config/grapple.json").done (response) =>
       @graphiteHost(response.graphiteHost)
       @format(response.format)
-      _(response.slides).each (settings) =>
-        @slides.push new Slide(this, settings)
+      @slides.push(new Slide(this, settings)) for settings in response.slides
 
   @load()
 
