@@ -1,0 +1,42 @@
+{
+  "graphiteHost": "http://graphite.watchdog.net/",
+  "refreshInterval": 10000,
+  "slides": [ {
+    "title": "New members per each additional member",
+    "subtitle": "Raw, 60-point, and 1440-point moving averages, one week",
+    "from": "-1week",
+    "series": [ {
+      "color": "#bbb",
+      "label": "10 minutes",
+      "source": "graphite",
+      "target": "stats.gauges.victorykit.nps"
+    }, {
+      "color": "red",
+      "label": "10 hours",
+      "source": "graphite",
+      "target": "movingAverage(stats.gauges.victorykit.nps,60)"
+    }, {
+      "color": "white",
+      "label": "10 days",
+      "source": "graphite",
+      "target": "movingAverage(stats.gauges.victorykit.nps,1440)"
+    } ]
+  }, {
+    "title": "Emails sent, opened, clicked",
+    "subtitle": "60-point moving averages, one week",
+    "from": "-1week",
+    "series": [ {
+      "label": "Sent",
+      "source": "graphite",
+      "target": "movingAverage(stats_counts.victorykit.emails_sent.count,60)"
+    }, {
+      "label": "Opened",
+      "source": "graphite",
+      "target": "movingAverage(stats_counts.victorykit.emails_opened.count,60)"
+    }, {
+      "label": "Clicked",
+      "source": "graphite",
+      "target": "movingAverage(stats_counts.victorykit.emails_clicked.count,60)"
+    } ]
+  } ]
+}

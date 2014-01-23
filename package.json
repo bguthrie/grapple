@@ -11,7 +11,8 @@
     "coffee-script": "*",
     "jade": "*",
     "redis": "*",
-    "json": "*"
+    "json": "*",
+    "request": "*"
   },
   "engines": {
     "node": "0.8.x",

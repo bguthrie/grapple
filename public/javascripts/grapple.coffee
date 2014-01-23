@@ -1,5 +1,5 @@
 Grapple =
-  sources: []
+  sources: {}
 
 Grapple.sources.random = (series) ->
   interval = series.slide.refreshInterval() * 1000
@@ -40,15 +40,21 @@ Grapple.sources.graphite = (series) ->
 
   refresh: () =>
     $.Deferred (def) =>
-      request = $.ajax "#{host}/render", 
-        method: "get"
-        dataType: "jsonp"
-        jsonp: "jsonp"
-        timeout: 1000
-        data: 
-          target: target
-          from: from
-          format: "json"
+      request = $.get "/proxy",
+        url: "#{host}/render"
+        target: target
+        from: from
+        format: "json"
+
+      # request = $.ajax "#{host}/render",
+      #   method: "get"
+      #   dataType: "jsonp"
+      #   jsonp: "jsonp"
+      #   timeout: 1000
+      #   data:
+      #     target: target
+      #     from: from
+      #     format: "json"
 
       request.fail (response) -> # Due to what appears to be a bug in jQuery, this is never called if the hostname doesn't point to a valid server.
         def.reject "The server is slow or unreachable."
@@ -86,7 +92,7 @@ DataSeries = (slide, settings) ->
       if @generator().isReady()
         refresh = @generator().refresh()
 
-        refresh.done (points) => 
+        refresh.done (points) =>
           @errorMessage null
           @points(points)
           def.resolve(points)
@@ -119,7 +125,7 @@ Slide = (config, settings) ->
     if $(evt.target).is(".slide")
       @footerHeight $(evt.target).find("footer").height()
 
-  @addSeries = (series) => 
+  @addSeries = (series) =>
     newIndex = @series.indexOf(series) + 1
     @series.splice newIndex, 0, new DataSeries(this, {})
 
@@ -151,13 +157,13 @@ Root = () ->
   prevLoc = parseInt(window.location.hash.slice(1), 10)
   @currentSlideIndex = ko.observable(prevLoc || 0)
 
-  @slideCount = ko.computed () => 
+  @slideCount = ko.computed () =>
     @slides().length
 
   @currentSlide = ko.computed () =>
     @slides()[ @currentSlideIndex() ]
 
-  @nextIndex = ko.computed () => 
+  @nextIndex = ko.computed () =>
     idx = @currentSlideIndex()
 
     next: Math.min(idx + 1, @slideCount() - 1)
@@ -221,9 +227,10 @@ Root = () ->
 
   @toggleSettings = (binding, evt) =>
     @settingsVisible !@settingsVisible()
-    
+
   @load = () =>
     $.get("config/grapple.json").done (response) =>
+      console.log "WAR"
       @graphiteHost(response.graphiteHost)
       @format(response.format)
       @slides.push(new Slide(this, settings)) for settings in response.slides
@@ -238,7 +245,7 @@ ko.bindingHandlers.plot =
 
     plot = $.plot elt, slide.points(),
       xaxis:
-        mode: "time", 
+        mode: "time",
         timeformat: format
         color: "white"
         tickLength: 0

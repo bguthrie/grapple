@@ -1,8 +1,8 @@
 express = require 'express'
-routes = require './routes'
 user = require './routes/user'
 http = require 'http'
 path = require 'path'
+request = require 'request'
 
 app = express()
 
@@ -17,11 +17,16 @@ app.configure ->
   app.use app.router
   app.use express.static(path.join(__dirname, 'public'))
 
-app.configure 'development', ->
+app.configure 'development', () ->
   app.use express.errorHandler()
 
-# app.get '/', routes.index
-# app.get '/users', user.list
+app.get '/', (req, res) ->
+  res.render 'index'
+
+app.get '/proxy', (req, res) ->
+  url = req.query.url
+  delete req.query.url
+  request(uri: url, qs: req.query).pipe(res)
 
 http.createServer(app).listen app.get('port'), ->
   console.log "Express server listening on port #{app.get('port')}"
