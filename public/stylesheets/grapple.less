@@ -29,6 +29,11 @@ body {
   font-family: @font-family;
   font-weight: 100;
 
+  &:-webkit-full-screen {
+    width: 100%;
+    height: 100%;
+  }
+
   header {
     position: absolute;
     width: 100%;
@@ -126,8 +131,8 @@ body {
           list-style-type: none;
           font-size: 180%;
           .series {
-            display: inline-block; 
-            clear: both; 
+            display: inline-block;
+            clear: both;
             margin-right: 4%;
             .color { display: inline-block; }
             .label { font-weight: 300; }
@@ -185,7 +190,7 @@ body {
 
     form {
       font-size: 100%;
-      
+
       input, textarea, select {
         -webkit-appearance: none;
         display: block;
@@ -210,7 +215,7 @@ body {
       }
 
       label {
-        font-size: 100%; 
+        font-size: 100%;
         font-weight: 500;
 
         > input, select {
@@ -272,7 +277,7 @@ body {
           margin-top: 0.5em;
           display: none;
 
-          &.active { 
+          &.active {
             display: block;
           }
         }
