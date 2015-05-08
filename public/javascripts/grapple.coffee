@@ -46,17 +46,7 @@ Grapple.sources.graphite = (series) ->
         from: from
         format: "json"
 
-      # request = $.ajax "#{host}/render",
-      #   method: "get"
-      #   dataType: "jsonp"
-      #   jsonp: "jsonp"
-      #   timeout: 1000
-      #   data:
-      #     target: target
-      #     from: from
-      #     format: "json"
-
-      request.fail (response) -> # Due to what appears to be a bug in jQuery, this is never called if the hostname doesn't point to a valid server.
+      request.fail (response) ->
         def.reject "The server is slow or unreachable."
 
       request.done (response) ->
@@ -67,7 +57,7 @@ Grapple.sources.graphite = (series) ->
           def.resolve datapoints
 
 DataSeries = (slide, settings) ->
-  this[setting] = ko.observable(settings[setting]) for setting in ["color", "label", "source", "target"]
+  this[setting] = ko.observable(settings[setting]) for setting in ["color", "label", "source", "target", "lineWidth"]
   @points = ko.observable([])
   @errorMessage = ko.observable()
   @isValid = ko.computed () => !@errorMessage()?
@@ -111,6 +101,8 @@ Slide = (config, settings) ->
   @refreshInterval = ko.observable(settings.refreshInterval || 1)
   @series = ko.observableArray(new DataSeries(this, config) for config in settings.series)
 
+  defaultLineWidth = 2
+
   @markerSize = ko.computed () =>
     0.7 * @config.headerHeight()
 
@@ -133,8 +125,10 @@ Slide = (config, settings) ->
     @series.remove series
 
   @refresh = () =>
-    $.when(series.refresh() for series in @series()).then () =>
-      @points({ data: series.points(), label: series.label() } for series in @series())
+    allRefreshes = ( series.refresh() for series in @series() )
+
+    $.when.apply(this, allRefreshes).then () =>
+      @points({ data: series.points(), label: series.label(), lines: { lineWidth: series.lineWidth() || @config.lineWidth || defaultLineWidth } } for series in @series())
       window.setTimeout @refresh, @refreshInterval() * 1000
 
   @refresh()
@@ -230,7 +224,6 @@ Root = () ->
 
   @load = () =>
     $.get("config/grapple.json").done (response) =>
-      console.log "WAR"
       @graphiteHost(response.graphiteHost)
       @format(response.format)
       @slides.push(new Slide(this, settings)) for settings in response.slides
