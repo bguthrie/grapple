@@ -90,9 +90,9 @@ html
           footer
             ul(class="legend" data-bind="foreach: series")
               li(class="series")
-                span(class="color" data-bind="style: { backgroundColor: color, width: size, height: size }")
-                span(class="label" data-bind="text: label")
-                span(class="value" data-bind="text: lastValue")
+                div(class="color" data-bind="style: { backgroundColor: color, width: size, height: size }")
+                div(class="label" data-bind="text: label")
+                div(class="value" data-bind="text: lastValue")
 
             h1(class="title" data-bind="text: title")
             h2(class="subtitle" data-bind="text: subtitle")

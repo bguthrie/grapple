@@ -127,20 +127,20 @@ body {
         h2 { font-weight: 300; color: @dark-yellow; }
 
         .legend {
-          margin-top: 2%;
+          display: flex;
+          margin: 2% 0 0.5% 0;
           list-style-type: none;
           font-size: 180%;
           .series {
-            display: inline-block;
-            clear: both;
+            display: flex;
             margin-right: 4%;
-            .color { display: inline-block; }
-            .label { font-weight: 300; }
-            .value { font-weight: 700; color: @dark-yellow; font-size: 80%; }
+            .color { margin-top: 3.5%; }
+            .label { white-space: nowrap; font-weight: 300; padding: 0 4%; }
+            .value { font-weight: 700; color: @dark-yellow; font-size: 80%; margin-top: 2%; }
           }
         }
 
-        .title { font-size: 400%; }
+        .title { font-size: 400%; clear: both; }
         .subtitle { font-size: 250%; }
       }
     }
